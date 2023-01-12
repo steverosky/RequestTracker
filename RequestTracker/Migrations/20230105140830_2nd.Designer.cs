@@ -11,8 +11,8 @@ using RequestTracker.Models.DBModels;
 namespace RequestTracker.Migrations
 {
     [DbContext(typeof(EF_dataContext))]
-    [Migration("20221222120841_initialDb")]
-    partial class initialDb
+    [Migration("20230105140830_2nd")]
+    partial class _2nd
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,7 +24,7 @@ namespace RequestTracker.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RequestTracker.Models.CategoryModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.CategoryModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -38,10 +38,10 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("category");
+                    b.ToTable("category", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.DepartmentModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.DepartmentModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,10 +55,10 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("department");
+                    b.ToTable("department", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.EmployeeModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.EmployeeModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,15 +84,16 @@ namespace RequestTracker.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("users");
+                    b.ToTable("users", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.ManagerModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.ManagerModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -109,10 +110,10 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("managers");
+                    b.ToTable("managers", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.RequestModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.RequestModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -143,10 +144,10 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("requests");
+                    b.ToTable("requests", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.RoleModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.RoleModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -160,10 +161,10 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("roles");
+                    b.ToTable("roles", "backend");
                 });
 
-            modelBuilder.Entity("RequestTracker.Models.StatusModel", b =>
+            modelBuilder.Entity("RequestTracker.Models.DBModels.StatusModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -181,7 +182,7 @@ namespace RequestTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("status");
+                    b.ToTable("status", "backend");
                 });
 #pragma warning restore 612, 618
         }

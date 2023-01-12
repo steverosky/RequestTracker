@@ -5,6 +5,8 @@ namespace RequestTracker.Models.BaseModels.RequestModels
     public class MakeRequestModel
     {
         [Required]
+        public int Id { get; set; }
+        [Required]
         public int EmployeeId { get; set; }
         [Required]
         public int CategoryId { get; set; }

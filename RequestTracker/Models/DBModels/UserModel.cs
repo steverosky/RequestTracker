@@ -1,89 +1,88 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RequestTracker.Models
+namespace RequestTracker.Models.DBModels
 {
-    [Table("users")]
+    [Table("users", Schema = "backend")]
     public class EmployeeModel
     {
         [Key, Required]
-        public int Id { get; set; }
-        [Required]
+        public int UserId { get; set; }       
         public string Name { get; set; } = string.Empty;
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
         [Required]
         public string Password { get; set; } = string.Empty;
-        public int DepartmentId { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int DeptId { get; set; }
         public int RoleId { get; set; }
         public int ManagerId { get; set; }
+        
 
     }
 
-    [Table("department")]
+    [Table("department", Schema = "backend")]
     public class DepartmentModel
     {
         [Key, Required]
-        public int Id { get; set; }
+        public int DeptId { get; set; }
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string DeptName { get; set; } = string.Empty;
     }
 
-    [Table("requests")]
+    [Table("requests", Schema = "backend")]
     public class RequestModel
     {
         [Key, Required]
-        public int Id { get; set; }
+        public int RequestId { get; set; }
         [Required]
-        public string Title { get; set; } = string.Empty;
+        public string RequestDesc { get; set; } = string.Empty;
+        public DateTime DateTime { get; set; }
         [Required]
-        public string Description { get; set; } = string.Empty;
+        public string ManagerReview { get; set; } = string.Empty;
+        public string AdminReview { get; set; } = string.Empty;
         [Required]
-        public string Status { get; set; } = string.Empty;
+        public int UserId { get; set; }
         [Required]
-        public int EmployeeId { get; set; }
-        [Required]
-        public int DepartmentId { get; set; }
         public int CategoryId { get; set; }
     }
 
-    [Table("category")]
+    [Table("category", Schema = "backend")]
     public class CategoryModel
     {
         [Key, Required]
-        public int Id { get; set; }
+        public int CategoryId { get; set; }
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
     }
 
-    [Table("roles")]
+    [Table("roles", Schema = "backend")]
     public class RoleModel
     {
         [Key, Required]
-        public int Id { get; set; }
+        public int RoleId { get; set; }
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string RoleName { get; set; } = string.Empty;
     }
 
-    [Table("managers")]
+    [Table("managers", Schema = "backend")]
     public class ManagerModel
     {
         [Key, Required]
-        public int Id { get; set; }
-        public int DepartmentId { get; set; }
+        public int ManagerId { get; set; }
+        public int DeptId { get; set; }
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string ManagerName { get; set; } = string.Empty;
     }
 
-    [Table("status")]
+    [Table("status", Schema = "backend")]
     public class StatusModel
     {
         [Key, Required]
-        public int Id { get; set; }
+        public int StatusId { get; set; }
         [Required]
-        public string ManagerDesc { get; set; } = string.Empty;
-        public string AdminDesc { get; set; } = string.Empty;
+        public string StatusName { get; set; } = string.Empty;
 
     }
 }

@@ -8,6 +8,7 @@
         public string Password { get; set; } = string.Empty;
         public string Department { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public string Status { get; set; }
         public string Manager { get; set; } = string.Empty;
 
     }

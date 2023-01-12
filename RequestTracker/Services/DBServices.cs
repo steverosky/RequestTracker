@@ -1,8 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RequestTracker.Interfaces;
-using RequestTracker.Models;
+using RequestTracker.Models.BaseModels.RequestModels;
 using RequestTracker.Models.BaseModels.ResponseModels;
 using RequestTracker.Models.DBModels;
+using System.Data;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 
 namespace RequestTracker.Services
@@ -10,20 +15,29 @@ namespace RequestTracker.Services
     public class DBServices : IDBServices
     {
         private EF_dataContext _context;
+        private IEmailService _email;
+        public IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public DBServices(EF_dataContext context)
+
+        public DBServices(EF_dataContext context, IEmailService email, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _email = email;
+            _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
+
         }
+
 
         // Authenticate  user details email & password for login
         public async Task<EmployeeModel> GetUser(string Email, string Password)
         {
-            var user = await _context.Set<EmployeeModel>().FirstOrDefaultAsync(e => e.Email == Email);
+            var user = await _context.Employees.FirstOrDefaultAsync(e => e.Email == Email);
             var decoded = DecodeFrom64(user.Password);
             if (user is not null && decoded == Password)
             {
-               return user;
+                return user;
             }
 
             return null;
@@ -91,27 +105,450 @@ namespace RequestTracker.Services
 
 
         // Get all employees
-        public async Task<List<GetUsersModel>> GetEmployees()
+        public List<GetUsersModel> GetEmployees()
         {
-            List<GetUsersModel> response = new List<GetUsersModel>();
-
-            var employees = await _context.Set<GetUsersModel>().ToListAsync();
-            employees.ForEach(row => response.Add(new GetUsersModel()
+            var roleclaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            if (roleclaim == "admin")
             {
-                Id = row.Id,
-                Name = row.Name,
-                Email = row.Email,
-                Password = DecodeFrom64(row.Password),
-                Department = row.Department,
-                Role = row.Role,
-                Manager = row.Manager
+                List<GetUsersModel> response = new List<GetUsersModel>();
 
-            }));
+                var dataList = _context.Employees.ToList();
 
-            return response.OrderBy(e => e.Id).ToList();
+                foreach (var row in dataList)
+                {
+                    // Retrieve the name of the employee's department
+                    var dept = _context.Departments.FirstOrDefault(d => d.DeptId == row.DeptId).DeptName;
+
+                    // Retrieve the name of the employee's manager
+                    var manager = _context.Employees.FirstOrDefault(m => m.UserId == row.ManagerId).Name;
+
+                    // Retrieve the name of the employee's role
+                    var role = _context.Roles.FirstOrDefault(r => r.RoleId == row.RoleId).RoleName;
+
+                    response.Add(new GetUsersModel()
+                    {
+                        Id = row.UserId,
+                        Name = row.Name,
+                        Email = row.Email,
+                        Password = DecodeFrom64(row.Password),
+                        Department = dept,
+                        Manager = manager,
+                        Role = role,
+                        Status = row.Status
+
+                    });
+
+                }
+                return response.OrderBy(e => e.Id).ToList();
+            }
+            else
+            {
+                throw new Exception("UnAuthorized Request");
+            }
 
         }
-        vgcgc\\
 
+        //get employee by email
+        public GetUsersModel GetEmployeeByEmail(string email)
+        {
+            var roleclaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            
+                GetUsersModel response = new GetUsersModel();
+            var employee = _context.Employees.FirstOrDefault(e => e.Email == email);
+            if (employee is not null &&  roleclaim =="admin")
+            {
+                var dept = _context.Departments.FirstOrDefault(d => d.DeptId == employee.DeptId).DeptName;
+                var manager = _context.Employees.FirstOrDefault(m => m.UserId == employee.ManagerId).Name;
+                var role = _context.Roles.FirstOrDefault(r => r.RoleId == employee.RoleId).RoleName;
+                return new GetUsersModel()
+                {
+                    Id = employee.UserId,
+                    Name = employee.Name,
+                    Email = employee.Email,
+                    Password = DecodeFrom64(employee.Password),
+                    Department = dept,
+                    Role = role,
+                    Status = employee.Status,
+                    Manager = manager
+                };
+            }
+
+            return null;
+        }
+
+        //post or add new user
+        public void AddUser(AddUserModel user)
+        {
+            //get role of user for approval
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+
+            // check if user Email exists before adding and auto-increment the id
+            var EmailList = _context.Employees.Select(p => p.Email).ToList();
+
+            if (EmailList.Contains(user.Email))
+            {
+                throw new Exception("email already exists");
+            }
+            else if (role == "admin")
+            {
+                var idList = _context.Employees.Select(x => x.UserId).ToList();
+                var maxId = idList.Max();
+                user.Id = maxId + 1;
+                string Password = DefaultPass();
+                user.Password = EncodePasswordToBase64(Password);
+
+
+                EmployeeModel dbTable = new EmployeeModel();
+                dbTable.UserId = user.Id;
+                dbTable.Name = user.Name;
+                dbTable.Email = user.Email;
+                dbTable.Password = EncodePasswordToBase64(user.Password);
+                dbTable.DeptId = user.DepartmentId;
+                dbTable.Status = "InActive";
+                dbTable.RoleId = 1;
+                dbTable.ManagerId = user.ManagerId;
+                _context.Employees.Add(dbTable);
+                _context.SaveChanges();
+
+
+                //read html file from current directory and pass it to the email body
+                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                StreamReader str = new StreamReader(FilePath);
+                string MailText = str.ReadToEnd();
+                str.Close();
+                MailText = MailText.Replace("[username]", user.Name).Replace("[email]", user.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
+
+                //send mail
+                _email.sendMail(MailText, user.Email);
+            }
+        }
+
+        //change password
+        public void ChangePass(ChangePassModel user)
+        {
+            var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email);
+            var pass = DecodeFrom64(employee.Password);
+            if (employee is not null && pass == user.CurrentPassword)
+            {
+                employee.Password = EncodePasswordToBase64(user.NewPassword);
+                _context.SaveChanges();
+            }
+            else
+            {
+                throw new Exception("Invalid email or password");
+            }
+
+        }
+
+        //make a product request
+        public void MakeRequest(MakeRequestModel request)
+        {
+            var idList = _context.Requests.Select(x => x.RequestId).ToList();
+            var maxId = idList.Max();
+            request.Id = maxId + 1;
+            var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
+
+            RequestModel dbTable = new RequestModel();
+            dbTable.RequestId = request.Id;
+            dbTable.UserId = request.EmployeeId;
+            dbTable.RequestDesc = request.Description;
+            dbTable.CategoryId = request.CategoryId;
+            dbTable.ManagerReview = status;
+            dbTable.AdminReview = status;
+            dbTable.DateTime = DateTime.Now;
+            _context.Requests.Add(dbTable);
+            _context.SaveChanges();
+        }
+
+        //get all requests for managers
+        public List<GetRequestsModel> GetRequests()
+        {
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            if (role == "manager")
+            {
+                List<GetRequestsModel> response = new List<GetRequestsModel>();
+
+                var dataList = _context.Requests.ToList();
+
+                foreach (var row in dataList)
+                {
+                    // Retrieve the name of the employee
+                    var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
+
+                    // Retrieve the name of the employee's manager
+                    var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+                    response.Add(new GetRequestsModel()
+                    {
+                        RequestId = row.RequestId,
+                        Description = row.RequestDesc,
+                        Category = category,
+                        Name = employee,
+                        DateTime = row.DateTime,
+                        ManangerReview = row.ManagerReview,
+                        AdminReview = row.AdminReview
+
+                    });
+                }
+                return response.OrderBy(e => e.RequestId).ToList();
+            }
+            else
+            {
+                throw new Exception("UnAuthorized Request");
+            }
+        }
+
+        //get all requests for admin
+        public List<GetRequestsModelAdmin> GetRequestsAdmin()
+        {
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            if (role == "admin")
+            {
+                List<GetRequestsModelAdmin> response = new List<GetRequestsModelAdmin>();
+
+                var dataList = _context.Requests.ToList();
+
+                foreach (var row in dataList)
+                {
+                    // Retrieve the name of the employee
+                    var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
+
+                    // Retrieve the name of the category
+                    var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+                    // Retrieve the name of the employee's department
+                    var department = _context.Departments.FirstOrDefault(d => d.DeptId == row.UserId).DeptName;
+
+
+                    response.Add(new GetRequestsModelAdmin()
+                    {
+                        RequestId = row.RequestId,
+                        Description = row.RequestDesc,
+                        Category = category,
+                        Name = employee,
+                        Department = department,
+                        DateTime = row.DateTime,
+                        ManangerReview = row.ManagerReview,
+                        AdminReview = row.AdminReview
+
+                    });
+                }
+                return response.OrderBy(e => e.RequestId).ToList();
+            }
+            else
+            {
+                throw new Exception("UnAuthorized Request");
+            }
+
+        }
+
+        //get all requests for employees
+        public List<GetRequestsModelEmployee> GetRequestsEmployee(int id)
+        {
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            if (role == "user")
+            {
+                List<GetRequestsModelEmployee> response = new List<GetRequestsModelEmployee>();
+
+                var dataList = _context.Requests.Where(e => e.UserId == id).ToList();
+
+                foreach (var row in dataList)
+                {
+                    // Retrieve the name of the category
+                    var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+                    response.Add(new GetRequestsModelEmployee()
+                    {
+                        RequestId = row.RequestId,
+                        Description = row.RequestDesc,
+                        Category = category,
+                        DateTime = row.DateTime,
+                        ManangerReview = row.ManagerReview,
+                        AdminReview = row.AdminReview
+
+                    });
+                }
+                return response.OrderBy(e => e.RequestId).ToList();
+            }
+            else
+            {
+                throw new Exception("UnAuthorized Request");
+            }
+
+        }
+
+        //approve request
+        public void ApproveRequest(int id)
+        {
+            //get role of user for approval
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+
+            //retrieve status and requests from db
+            var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
+            var status = _context.Status.FirstOrDefault(s => s.StatusId == 2).StatusName;
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
+            var manager = _context.Employees.FirstOrDefault(e => e.UserId == employee.ManagerId);
+
+            //if role is manager
+            if (request is not null && role == "manager")
+            {
+                request.ManagerReview = status;
+                _context.SaveChanges();
+
+                //read html file from current directory and pass it to the email body
+                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                StreamReader str = new StreamReader(FilePath);
+                string MailText = str.ReadToEnd();
+                str.Close();
+                // MailText = MailText.Replace("[username]", employee.Name).Replace("[email]", employee.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
+
+                //send mail
+                _email.sendMail(MailText, employee.Email);
+                _email.sendMail(MailText, manager.Email);
+            }
+            else if (request is not null && role == "admin")
+            {
+                request.AdminReview = status;
+                _context.SaveChanges();
+            }
+            else
+            {
+                throw new Exception("Invalid request");
+            }
+
+        }
+
+        //reject request
+        public void RejectRequest(int id)
+        {
+            //get role of user for approval
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+
+            //retrieve status and requests from db
+            var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
+            var status = _context.Status.FirstOrDefault(s => s.StatusId == 3).StatusName;
+
+            //if role is manager
+            if (request is not null && role == "manager")
+            {
+                request.ManagerReview = status;
+                _context.SaveChanges();
+
+                //send email
+            }
+            else if (request is not null && role == "admin")
+            {
+                request.AdminReview = status;
+                _context.SaveChanges();
+            }
+            else
+            {
+                throw new Exception("Invalid request");
+            }
+
+        }
+
+        //get all requests by keyword
+        public List<GetRequestsModel> GetRequestsById(int stat)
+        {
+            List<GetRequestsModel> response = new List<GetRequestsModel>();
+            var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
+
+            var dataList = _context.Requests.Where(r => r.ManagerReview == review && r.AdminReview == review).ToList();
+
+            foreach (var row in dataList)
+            {
+                // Retrieve the name of the employee
+                var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
+
+                // Retrieve the name of the employee's manager
+                var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+                response.Add(new GetRequestsModel()
+                {
+                    RequestId = row.RequestId,
+                    Description = row.RequestDesc,
+                    Category = category,
+                    Name = employee,
+                    DateTime = row.DateTime,
+                    ManangerReview = row.ManagerReview,
+                    AdminReview = row.AdminReview
+
+                });
+            }
+            return response.OrderBy(e => e.RequestId).ToList();
+
+        }
+
+
+        public async Task<object> CreateTokenAsync(string email, string password)
+        {
+            var token1 = "";
+            double expireTime = 0;
+            if (email != null && password != null)
+            {
+                var user = await GetUser(email, password);
+                var role = _context.Roles.FirstOrDefault(r => r.RoleId == user.RoleId).RoleName;
+
+                if (user != null)
+                {
+                    //create claims details based on the user information
+                    var claims = new[] {
+                        new Claim(JwtRegisteredClaimNames.Sub, _configuration["JwtConfig:Subject"]),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
+                        //new Claim(ClaimTypes.Email, user.Email.ToString()),
+                        new Claim(ClaimTypes.Role, role.ToString()),
+
+
+                        };
+
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtConfig:Secret"]));
+                    var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(
+                        _configuration["JwtConfig:Issuer"],
+                        _configuration["JwtConfig:Audience"],
+                        claims,
+                        expires: DateTime.UtcNow.AddMinutes(120),
+                        signingCredentials: signIn);
+
+
+                    token1 = new JwtSecurityTokenHandler().WriteToken(token);
+                    expireTime = token.ValidTo.Subtract(DateTime.UtcNow).TotalSeconds;
+                    double expiryTimeInSeconds = Math.Ceiling(expireTime);
+
+
+                    return new TokenResponse()
+                    {
+                        Token = token1,
+                        Role = role,
+                        Email = email,
+                        ExpiryTime = expiryTimeInSeconds
+                    };
+                }
+                else
+                {
+                    throw new Exception("Invalid credentials");
+                }
+
+            }
+            else
+            {
+                throw new Exception("Invalid credentials");
+            }
+
+        }
+            
     }
 }
+
+
+
+
+//// _context.Employees
+//                        .FromSqlRaw("INSERT INTO users (UserId, Name, Email, Password, RoleId, ManagerId, DeptId) values " +
+//                        "(user.UserId, user.Name, user.Email, user.Password, user.Status, user.RoleId, user.ManagerId, user.DeptId) dbTable.Id, dbTable.Name, " +
+//                        "dbTable.Email, dbTable.Password, dbTable.Role, dbTable.Manager, dbTable.Department);
+//                    dbTable.Department = _context.Departments.FromSqlRaw("SELECT FROM department WHERE Id = {0}", user.DepartmentId).Select(dbTable => dbTable.Name).FirstOrDefault();
+
+

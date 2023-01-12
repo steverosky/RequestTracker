@@ -6,13 +6,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace RequestTracker.Migrations
 {
     /// <inheritdoc />
-    public partial class initialDb : Migration
+    public partial class _2nd : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "backend");
+
             migrationBuilder.CreateTable(
                 name: "category",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -26,6 +30,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "department",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -39,6 +44,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "managers",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -53,6 +59,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "requests",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -71,6 +78,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "roles",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -84,6 +92,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "status",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -98,6 +107,7 @@ namespace RequestTracker.Migrations
 
             migrationBuilder.CreateTable(
                 name: "users",
+                schema: "backend",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -106,7 +116,7 @@ namespace RequestTracker.Migrations
                     Email = table.Column<string>(type: "text", nullable: false),
                     Password = table.Column<string>(type: "text", nullable: false),
                     DepartmentId = table.Column<int>(type: "integer", nullable: false),
-                    RoleId = table.Column<int>(type: "integer", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false),
                     ManagerId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -119,25 +129,32 @@ namespace RequestTracker.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "category");
+                name: "category",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "department");
+                name: "department",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "managers");
+                name: "managers",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "requests");
+                name: "requests",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "roles");
+                name: "roles",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "status");
+                name: "status",
+                schema: "backend");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "users",
+                schema: "backend");
         }
     }
 }
