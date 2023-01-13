@@ -219,12 +219,12 @@ namespace RequestTracker.Controllers
         //Get All Requests Employee  api/<UserController>/6
         [HttpGet]
         [Route("GetAllRequestsEmployee")]
-        public IActionResult GetAllRequestsEmployee(int id)
+        public IActionResult GetAllRequestsEmployee()
         {
             ResponseType type = ResponseType.Success;
             try
             {
-                IEnumerable<GetRequestsModelEmployee> data = (IEnumerable<GetRequestsModelEmployee>)_db.GetRequestsEmployee(id);
+                IEnumerable<GetRequestsModelEmployee> data = (IEnumerable<GetRequestsModelEmployee>)_db.GetRequestsEmployee();
 
                 if (!data.Any())
                 {
