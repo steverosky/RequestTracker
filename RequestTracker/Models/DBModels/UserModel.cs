@@ -42,6 +42,7 @@ namespace RequestTracker.Models.DBModels
         [Required]
         public string ManagerReview { get; set; } = string.Empty;
         public string AdminReview { get; set; } = string.Empty;
+        public int DeptId { get; set; }
         [Required]
         public int UserId { get; set; }
         [Required]

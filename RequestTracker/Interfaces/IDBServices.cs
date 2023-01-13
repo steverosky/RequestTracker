@@ -18,7 +18,7 @@ namespace RequestTracker.Interfaces
         public void MakeRequest(MakeRequestModel request);
         public List<GetRequestsModel> GetRequests();
         public List<GetRequestsModelAdmin> GetRequestsAdmin();
-        public List<GetRequestsModelEmployee> GetRequestsEmployee(int id);
+        public List<GetRequestsModelEmployee> GetRequestsEmployee();
         public void ApproveRequest(int id);
         public void RejectRequest(int id);
         public List<GetRequestsModel> GetRequestsById(int stat);
