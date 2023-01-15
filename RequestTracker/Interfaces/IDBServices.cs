@@ -16,12 +16,12 @@ namespace RequestTracker.Interfaces
         void ChangePass(ChangePassModel user);
         Task<object> CreateTokenAsync(string email, string password);
         public void MakeRequest(MakeRequestModel request);
-        public List<GetRequestsModel> GetRequests();
-        public List<GetRequestsModelAdmin> GetRequestsAdmin();
-        public List<GetRequestsModelEmployee> GetRequestsEmployee();
+        public List<GetRequestsModel> GetRequests(int stat);
+        public List<GetRequestsModelAdmin> GetRequestsAdmin(int stat);
+        public List<GetRequestsModelEmployee> GetRequestsEmployee(int stat);
         public void ApproveRequest(int id);
         public void RejectRequest(int id);
-        public List<GetRequestsModel> GetRequestsById(int stat);
+        //public List<GetRequestsModel> GetRequestsById(int stat);
 
 
 

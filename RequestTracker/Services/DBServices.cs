@@ -264,7 +264,7 @@ namespace RequestTracker.Services
         }
 
         //get all requests for managers
-        public List<GetRequestsModel> GetRequests()
+        public List<GetRequestsModel> GetRequests(int stat)
         {
             var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
             var email = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
@@ -274,7 +274,34 @@ namespace RequestTracker.Services
                 //get the department of the manager
                 var deptId = _context.Employees.Where(x => x.Email == email).Select(x => x.DeptId).FirstOrDefault();
                 //filter the requests by the department
-                var dataList = _context.Requests.Where(x => x.DeptId == deptId).ToList();
+                var dataList1 = _context.Requests.Where(x => x.DeptId == deptId).ToList();
+                var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
+                
+                var dataList = new List<RequestModel>();
+                if (stat == 1)
+                {
+                    dataList = dataList1.Where(x => x.ManagerReview == review ).ToList();
+                }
+                else if (stat == 2)
+                {
+                    dataList = dataList1.Where(x => x.ManagerReview == review ).ToList();
+                }
+                else if (stat == 3)
+                {
+                    dataList = dataList1.Where(x => x.ManagerReview == review).ToList();
+                }
+                else if (stat == 4)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+                }
+                else if (stat == 5)// where 5 = all requests
+                {
+                    dataList = dataList1;
+                }
+                else
+                {
+                    throw new Exception("No Records");
+                };
 
                 foreach (var row in dataList)
                 {
@@ -305,16 +332,39 @@ namespace RequestTracker.Services
         }
 
         //get all requests for admin
-        public List<GetRequestsModelAdmin> GetRequestsAdmin()
+        public List<GetRequestsModelAdmin> GetRequestsAdmin(int stat)
         {
             var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
             if (role == "admin")
             {
+                var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
                 List<GetRequestsModelAdmin> response = new List<GetRequestsModelAdmin>();
-
-
-                var dataList = _context.Requests.ToList();
-
+                var dataList = new List<RequestModel>();
+                if (stat == 1)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview==review).ToList();
+                }
+                else if (stat == 2)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == review && x.AdminReview == review).ToList();
+                }                
+                else if (stat == 3)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+                }
+                else if (stat == 4)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+                }
+                else if(stat == 5)// where 5 = all requests
+                {
+                    dataList = _context.Requests.ToList();
+                }
+                else
+                {
+                    throw new Exception("No Records");
+                };
+                 
                 foreach (var row in dataList)
                 {
                     // Retrieve the name of the employee
@@ -350,16 +400,42 @@ namespace RequestTracker.Services
         }
 
         //get all requests for employees
-        public List<GetRequestsModelEmployee> GetRequestsEmployee()
+        public List<GetRequestsModelEmployee> GetRequestsEmployee(int stat)
         {
             //var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
             var email = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
 
-            List<GetRequestsModelEmployee> response = new List<GetRequestsModelEmployee>();
-
             var id = _context.Employees.Where(x => x.Email == email).Select(x => x.UserId).FirstOrDefault();
+            var dataList1 = _context.Requests.Where(e => e.UserId == id).ToList();
 
-            var dataList = _context.Requests.Where(e => e.UserId == id).ToList();
+            var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
+            var dataList = new List<RequestModel>();
+            if (stat == 1)
+            {
+                dataList = dataList1.Where(x => x.AdminReview == review).ToList();
+            }
+            else if (stat == 2)
+            {
+                dataList = dataList1.Where(x => x.AdminReview == review).ToList();
+            }
+            else if (stat == 3)
+            {
+                dataList = dataList1.Where(x => x.ManagerReview == review || x.AdminReview == review).ToList();
+            }
+            else if (stat == 4)
+            {
+                dataList = dataList1.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+            }
+            else if (stat == 5)// where 5 = all requests
+            {
+                dataList = dataList1;
+            }
+            else
+            {
+                throw new Exception("No Records");
+            };
+
+            List<GetRequestsModelEmployee> response = new List<GetRequestsModelEmployee>();
 
             foreach (var row in dataList)
             {
@@ -378,11 +454,7 @@ namespace RequestTracker.Services
                 });
             }
             return response.OrderBy(e => e.RequestId).ToList();
-            //else
-            //{
-            //    throw new Exception("UnAuthorized Request");
-            //}
-
+           
         }
 
         //approve request
@@ -485,39 +557,7 @@ namespace RequestTracker.Services
 
         }
 
-        //get all requests by keyword
-        public List<GetRequestsModel> GetRequestsById(int stat)
-        {
-            List<GetRequestsModel> response = new List<GetRequestsModel>();
-            var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
-
-            var dataList = _context.Requests.Where(r => r.ManagerReview == review && r.AdminReview == review).ToList();
-
-            foreach (var row in dataList)
-            {
-                // Retrieve the name of the employee
-                var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
-
-                // Retrieve the name of the employee's manager
-                var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
-
-                response.Add(new GetRequestsModel()
-                {
-                    RequestId = row.RequestId,
-                    Description = row.RequestDesc,
-                    Category = category,
-                    Name = employee,
-                    DateTime = row.DateTime,
-                    ManangerReview = row.ManagerReview,
-                    AdminReview = row.AdminReview
-
-                });
-            }
-            return response.OrderBy(e => e.RequestId).ToList();
-
-        }
-
-
+       
         public async Task<object> CreateTokenAsync(string email, string password)
         {
             var token1 = "";
@@ -584,6 +624,40 @@ namespace RequestTracker.Services
 
     }
 }
+
+////get all requests by keyword
+//public List<GetRequestsModel> GetRequestsById(int stat)
+//{
+//    List<GetRequestsModel> response = new List<GetRequestsModel>();
+//    var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
+
+//    var dataList = _context.Requests.Where(r => r.ManagerReview == review && r.AdminReview == review).ToList();
+
+//    foreach (var row in dataList)
+//    {
+//        // Retrieve the name of the employee
+//        var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
+
+//        // Retrieve the name of the employee's manager
+//        var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+//        response.Add(new GetRequestsModel()
+//        {
+//            RequestId = row.RequestId,
+//            Description = row.RequestDesc,
+//            Category = category,
+//            Name = employee,
+//            DateTime = row.DateTime,
+//            ManangerReview = row.ManagerReview,
+//            AdminReview = row.AdminReview
+
+//        });
+//    }
+//    return response.OrderBy(e => e.RequestId).ToList();
+
+//}
+
+
 
 
 

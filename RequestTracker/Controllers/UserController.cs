@@ -38,14 +38,14 @@ namespace RequestTracker.Controllers
             ResponseType type = ResponseType.Success;
             try
             {
-                   IEnumerable<GetUsersModel> data = (IEnumerable<GetUsersModel>)_db.GetEmployees();
+                IEnumerable<GetUsersModel> data = (IEnumerable<GetUsersModel>)_db.GetEmployees();
 
-                    if (!data.Any())
-                    {
-                        type = ResponseType.NotFound;
-                    }
-                    return Ok(ResponseHandler.GetAppResponse(type, data));
-               
+                if (!data.Any())
+                {
+                    type = ResponseType.NotFound;
+                }
+                return Ok(ResponseHandler.GetAppResponse(type, data));
+
             }
             catch (Exception ex)
             {
@@ -63,13 +63,13 @@ namespace RequestTracker.Controllers
             ResponseType type = ResponseType.Success;
             try
             {
-                    GetUsersModel data = _db.GetEmployeeByEmail(email);
-                    if (data == null)
-                    {
-                        type = ResponseType.NotFound;
-                    }
-                    return Ok(ResponseHandler.GetAppResponse(type, data));
-             
+                GetUsersModel data = _db.GetEmployeeByEmail(email);
+                if (data == null)
+                {
+                    type = ResponseType.NotFound;
+                }
+                return Ok(ResponseHandler.GetAppResponse(type, data));
+
             }
             catch (Exception ex)
             {
@@ -79,29 +79,29 @@ namespace RequestTracker.Controllers
         }
 
         // POST api/<UserController>
-        [Authorize(AuthenticationSchemes ="Bearer", Roles ="admin")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         [HttpPost]
         [Route("AddUser")]
         public IActionResult Post([FromBody] AddUserModel model)
         {
-                // Validate the model and the default role
-                if (!ModelState.IsValid )
-                {
-                    return BadRequest(ModelState);
-                }
-                try
-                {
-                    ResponseType type = ResponseType.Success;
-                    _db.AddUser(model);
+            // Validate the model and the default role
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                ResponseType type = ResponseType.Success;
+                _db.AddUser(model);
 
-                    return Ok(ResponseHandler.GetAppResponse(type, model));
+                return Ok(ResponseHandler.GetAppResponse(type, model));
 
-                }
-                catch (Exception ex)
-                {
+            }
+            catch (Exception ex)
+            {
 
-                    return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-                }
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
         }
 
 
@@ -111,16 +111,16 @@ namespace RequestTracker.Controllers
         public IActionResult ChangePass([FromBody] ChangePassModel user)
         {
             try
-                {
-                    ResponseType type = ResponseType.Success;
-                    _db.ChangePass(user);
-                    return Ok(ResponseHandler.GetAppResponse(type, user));
-                }
-                catch (Exception ex)
-                {
+            {
+                ResponseType type = ResponseType.Success;
+                _db.ChangePass(user);
+                return Ok(ResponseHandler.GetAppResponse(type, user));
+            }
+            catch (Exception ex)
+            {
 
-                    return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-                }
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
         }
 
 
@@ -129,7 +129,7 @@ namespace RequestTracker.Controllers
         [HttpPost]
         [Route("Login")]
         public async Task<IActionResult> Login(EmployeeModel model)
-        {            
+        {
             try
             {
                 ResponseType type = ResponseType.Success;
@@ -142,7 +142,7 @@ namespace RequestTracker.Controllers
 
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
-           
+
         }
 
         // Make Request  api/<UserController>/6
@@ -168,12 +168,12 @@ namespace RequestTracker.Controllers
         //Get All Requests Manager  api/<UserController>/6
         [HttpGet]
         [Route("GetAllRequestsManager")]
-        public IActionResult GetAllRequestsManager()
+        public IActionResult GetAllRequestsManager(int stat)
         {
             ResponseType type = ResponseType.Success;
             try
             {
-                IEnumerable<GetRequestsModel> data = (IEnumerable<GetRequestsModel>)_db.GetRequests();
+                IEnumerable<GetRequestsModel> data = (IEnumerable<GetRequestsModel>)_db.GetRequests(stat);
 
                 if (!data.Any())
                 {
@@ -193,12 +193,12 @@ namespace RequestTracker.Controllers
         //Get All Requests Admin  api/<UserController>/6
         [HttpGet]
         [Route("GetAllRequestsAdmin")]
-        public IActionResult GetAllRequestsAdmin()
+        public IActionResult GetAllRequestsAdmin(int stat)
         {
             ResponseType type = ResponseType.Success;
             try
             {
-                IEnumerable<GetRequestsModelAdmin> data = (IEnumerable<GetRequestsModelAdmin>)_db.GetRequestsAdmin();
+                IEnumerable<GetRequestsModelAdmin> data = (IEnumerable<GetRequestsModelAdmin>)_db.GetRequestsAdmin(stat);
 
                 if (!data.Any())
                 {
@@ -219,12 +219,12 @@ namespace RequestTracker.Controllers
         //Get All Requests Employee  api/<UserController>/6
         [HttpGet]
         [Route("GetAllRequestsEmployee")]
-        public IActionResult GetAllRequestsEmployee()
+        public IActionResult GetAllRequestsEmployee(int stat)
         {
             ResponseType type = ResponseType.Success;
             try
             {
-                IEnumerable<GetRequestsModelEmployee> data = (IEnumerable<GetRequestsModelEmployee>)_db.GetRequestsEmployee();
+                IEnumerable<GetRequestsModelEmployee> data = (IEnumerable<GetRequestsModelEmployee>)_db.GetRequestsEmployee(stat);
 
                 if (!data.Any())
                 {
@@ -257,7 +257,7 @@ namespace RequestTracker.Controllers
 
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
-            
+
         }
 
 
@@ -277,34 +277,36 @@ namespace RequestTracker.Controllers
 
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
-            
-        }
-
-        //get all requests by keyword
-        [AllowAnonymous]
-        [HttpGet]
-        [Route("GetAllRequestsByKeyword")]
-        public IActionResult GetRequestsById(int stat)
-        {
-            ResponseType type = ResponseType.Success;
-            try
-            {
-                IEnumerable<GetRequestsModel> data = (IEnumerable<GetRequestsModel>)_db.GetRequestsById(stat);
-
-                if (!data.Any())
-                {
-                    type = ResponseType.NotFound;
-                }
-                return Ok(ResponseHandler.GetAppResponse(type, data));
-            }
-
-            catch (Exception ex)
-            {
-
-                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-            }
 
         }
+    }
+}
+
+        ////get all requests by keyword
+        //[AllowAnonymous]
+        //[HttpGet]
+        //[Route("GetAllRequestsByKeyword")]
+        //public IActionResult GetRequestsById(int stat)
+        //{
+        //    ResponseType type = ResponseType.Success;
+        //    try
+        //    {
+        //        IEnumerable<GetRequestsModel> data = (IEnumerable<GetRequestsModel>)_db.GetRequestsById(stat);
+
+        //        if (!data.Any())
+        //        {
+        //            type = ResponseType.NotFound;
+        //        }
+        //        return Ok(ResponseHandler.GetAppResponse(type, data));
+        //    }
+
+        //    catch (Exception ex)
+        //    {
+
+        //        return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+        //    }
+
+        //}
 
 
 
@@ -425,30 +427,26 @@ namespace RequestTracker.Controllers
         ////}
 
 
-        // Dictionary to map roles to their corresponding permissions
-        private Dictionary<string, List<string>> rolePermissions = new Dictionary<string, List<string>>()
-        {
-            { "user", new List<string>() { "ChangePass", "UpdateUser", "Login" } },
-            { "admin", new List<string>() { "ChangePass", "UpdateUser", "Login", "AddUser", "DeleteUser", "GetUsers", "GetUserById", "AssignRoles" } }
-        };
+        //// Dictionary to map roles to their corresponding permissions
+        //private Dictionary<string, List<string>> rolePermissions = new Dictionary<string, List<string>>()
+        //{
+        //    { "user", new List<string>() { "ChangePass", "UpdateUser", "Login" } },
+        //    { "admin", new List<string>() { "ChangePass", "UpdateUser", "Login", "AddUser", "DeleteUser", "GetUsers", "GetUserById", "AssignRoles" } }
+        //};
 
-        // Method to check if the user has the specified permission
-        private bool HasPermission(string role, string permission)
-        {
-            // Check if the role exists in the dictionary and if it has the specified permission
-            if (rolePermissions.ContainsKey(role) && rolePermissions[role].Contains(permission))
-            {
-                return true;
-            }
+        //// Method to check if the user has the specified permission
+        //private bool HasPermission(string role, string permission)
+        //{
+        //    // Check if the role exists in the dictionary and if it has the specified permission
+        //    if (rolePermissions.ContainsKey(role) && rolePermissions[role].Contains(permission))
+        //    {
+        //        return true;
+        //    }
 
-            return false;
-        }
+        //    return false;
+        //}
 
-    }
-}
-
-
-//[HttpPost]
+ //[HttpPost]
 //[Route("AddAdmin")]
 //public async Task<IActionResult> AddAdmin([FromBody] userModel model)
 //{
