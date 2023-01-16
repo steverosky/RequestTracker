@@ -264,12 +264,12 @@ namespace RequestTracker.Controllers
         //Reject Request  api/<UserController>/6
         [HttpPost]
         [Route("RejectRequest")]
-        public IActionResult RejectRequest(int id)
+        public IActionResult RejectRequest(int id, string reason)
         {
             try
             {
                 ResponseType type = ResponseType.Success;
-                _db.RejectRequest(id);
+                _db.RejectRequest(id, reason);
                 return Ok(ResponseHandler.GetAppResponse(type, "Request Denied"));
             }
             catch (Exception ex)

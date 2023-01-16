@@ -288,12 +288,9 @@ namespace RequestTracker.Services
                 }
                 else if (stat == 3)
                 {
-                    dataList = dataList1.Where(x => x.ManagerReview == review).ToList();
+                    dataList = dataList1.Where(x => x.ManagerReview == review ).ToList();
                 }
-                else if (stat == 4)
-                {
-                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
-                }
+                
                 else if (stat == 5)// where 5 = all requests
                 {
                     dataList = dataList1;
@@ -350,12 +347,9 @@ namespace RequestTracker.Services
                 }                
                 else if (stat == 3)
                 {
-                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review || x.AdminReview == "See Admin").ToList();
                 }
-                else if (stat == 4)
-                {
-                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
-                }
+               
                 else if(stat == 5)// where 5 = all requests
                 {
                     dataList = _context.Requests.ToList();
@@ -420,12 +414,9 @@ namespace RequestTracker.Services
             }
             else if (stat == 3)
             {
-                dataList = dataList1.Where(x => x.ManagerReview == review || x.AdminReview == review).ToList();
+                dataList = dataList1.Where(x => x.ManagerReview == review || x.AdminReview == review || x.AdminReview == "See Admin").ToList();
             }
-            else if (stat == 4)
-            {
-                dataList = dataList1.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
-            }
+            
             else if (stat == 5)// where 5 = all requests
             {
                 dataList = dataList1;
@@ -474,33 +465,44 @@ namespace RequestTracker.Services
                          where r.RoleId == 2
                          select u.Email).FirstOrDefault();
 
+            string requestid = request.RequestId.ToString();
+
             //if role is manager
             if (request is not null && role == "manager")
             {
+                
                 request.ManagerReview = status;
                 _context.SaveChanges();
 
+                //send mail to employee
                 //read html file from current directory and pass it to the email body
-                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                string FilePath = Directory.GetCurrentDirectory() + "\\managerApproval.html";
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                // MailText = MailText.Replace("[username]", employee.Name).Replace("[email]", employee.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
-
-                //send mail
+                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+                                
                 _email.sendMail(MailText, employee.Email);
-                _email.sendMail(MailText, admin);
+
+                //send mail to admin
+                string FilePath1 = Directory.GetCurrentDirectory() + "\\adminNotify.html";
+                StreamReader strg = new StreamReader(FilePath1);
+                string MailText1 = strg.ReadToEnd();
+                strg.Close();
+                MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+
+                _email.sendMail(MailText1, admin);
             }
             else if (request is not null && role == "admin")
             {
                 request.AdminReview = status;
                 _context.SaveChanges();
 
-                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                string FilePath = Directory.GetCurrentDirectory() + "\\finalApprove.html";
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                // MailText = MailText.Replace("[username]", employee.Name).Replace("[email]", employee.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
+                MailText = MailText.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
                 _email.sendMail(MailText, employee.Email);
                 _email.sendMail(MailText, manager.Email);
@@ -513,7 +515,7 @@ namespace RequestTracker.Services
         }
 
         //reject request
-        public void RejectRequest(int id)
+        public void RejectRequest(int id, string reason)
         {
             //get role of user for approval
             var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
@@ -522,33 +524,41 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 3).StatusName;
+            var manager = _context.Employees.FirstOrDefault(e => e.UserId == employee.ManagerId);
+
+
+            string requestid = request.RequestId.ToString();
 
             //if role is manager
             if (request is not null && role == "manager")
             {
                 request.ManagerReview = status;
+                request.RejectReason = reason;
                 _context.SaveChanges();
 
-                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                string FilePath = Directory.GetCurrentDirectory() + "\\managerReject.html";
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                // MailText = MailText.Replace("[username]", employee.Name).Replace("[email]", employee.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
+                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[who]", "Manager").Replace("[reason]", reason);
 
                 _email.sendMail(MailText, employee.Email);
             }
             else if (request is not null && role == "admin")
             {
                 request.AdminReview = status;
+                request.RejectReason = reason;
+
                 _context.SaveChanges();
 
-                string FilePath = Directory.GetCurrentDirectory() + "\\index2.html";
+                string FilePath = Directory.GetCurrentDirectory() + "\\managerReject.html";
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                // MailText = MailText.Replace("[username]", employee.Name).Replace("[email]", employee.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
+                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[who]", "Admin").Replace("[reason]", reason);
 
                 _email.sendMail(MailText, employee.Email);
+                _email.sendMail(MailText, manager.Email);
             }
             else
             {

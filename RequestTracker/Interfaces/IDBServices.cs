@@ -20,7 +20,7 @@ namespace RequestTracker.Interfaces
         public List<GetRequestsModelAdmin> GetRequestsAdmin(int stat);
         public List<GetRequestsModelEmployee> GetRequestsEmployee(int stat);
         public void ApproveRequest(int id);
-        public void RejectRequest(int id);
+        public void RejectRequest(int id, string reason);
         //public List<GetRequestsModel> GetRequestsById(int stat);
 
 

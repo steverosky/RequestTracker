@@ -47,6 +47,8 @@ namespace RequestTracker.Models.DBModels
         public int UserId { get; set; }
         [Required]
         public int CategoryId { get; set; }
+        [Required]
+        public string RejectReason { get; set; }
     }
 
     [Table("category", Schema = "backend")]

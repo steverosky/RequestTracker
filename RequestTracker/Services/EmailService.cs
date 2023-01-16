@@ -45,9 +45,10 @@ namespace RequestTracker.Services
                     try
                     {
                         // Open the image file from directory and attach it to the email
-                        var imagePath = "transparent.png";
+                        var imagePath = "cyberteqLogo.png";
                         var image = new Attachment(imagePath);
                         message.Attachments.Add(image);
+                        
 
                         // Set the Content-ID of the image
                         image.ContentId = "image1";
