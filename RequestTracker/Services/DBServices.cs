@@ -458,7 +458,7 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 2).StatusName;
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
-            var manager = _context.Employees.FirstOrDefault(e => e.UserId == employee.ManagerId);
+            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
             //var admin = _context.Employees.FirstOrDefault(a => a.RoleId == 2);
             var admin = (from u in _context.Employees
                          join r in _context.Roles on u.RoleId equals r.RoleId
@@ -505,7 +505,7 @@ namespace RequestTracker.Services
                 MailText = MailText.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
                 _email.sendMail(MailText, employee.Email);
-                _email.sendMail(MailText, manager.Email);
+                _email.sendMail(MailText, manager.ManagerEmail);
             }
             else
             {
@@ -524,7 +524,7 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 3).StatusName;
-            var manager = _context.Employees.FirstOrDefault(e => e.UserId == employee.ManagerId);
+            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
 
 
             string requestid = request.RequestId.ToString();
@@ -558,7 +558,7 @@ namespace RequestTracker.Services
                 MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[who]", "Admin").Replace("[reason]", reason);
 
                 _email.sendMail(MailText, employee.Email);
-                _email.sendMail(MailText, manager.Email);
+                _email.sendMail(MailText, manager.ManagerEmail);
             }
             else
             {
@@ -616,7 +616,14 @@ namespace RequestTracker.Services
                         Token = token1,
                         Role = role,
                         Email = email,
-                        ExpiryTime = expiryTimeInSeconds
+                        ExpiryTime = expiryTimeInSeconds,
+                        Name = user.Name,
+                        Id = user.UserId,
+                        ManagerId = user.ManagerId,
+                        RoleId = user.RoleId,
+                        DeptId = user.DeptId,
+                        Status = user.Status
+                        
                     };
                 }
                 else

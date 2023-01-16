@@ -47,8 +47,7 @@ namespace RequestTracker.Models.DBModels
         public int UserId { get; set; }
         [Required]
         public int CategoryId { get; set; }
-        [Required]
-        public string RejectReason { get; set; }
+        public string? RejectReason { get; set; } 
     }
 
     [Table("category", Schema = "backend")]
@@ -77,6 +76,7 @@ namespace RequestTracker.Models.DBModels
         public int DeptId { get; set; }
         [Required]
         public string ManagerName { get; set; } = string.Empty;
+        public string ManagerEmail { get; set; } = string.Empty;
     }
 
     [Table("status", Schema = "backend")]
