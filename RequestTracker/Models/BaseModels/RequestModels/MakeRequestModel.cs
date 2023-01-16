@@ -11,8 +11,6 @@ namespace RequestTracker.Models.BaseModels.RequestModels
         [Required]
         public int CategoryId { get; set; }
         [Required]
-        public int DeptId { get; set; }
-        [Required]
         public string Description { get; set; } = string.Empty;
 
     }

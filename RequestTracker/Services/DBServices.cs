@@ -260,7 +260,7 @@ namespace RequestTracker.Services
             dbTable.CategoryId = request.CategoryId;
             dbTable.ManagerReview = status;
             dbTable.AdminReview = status;
-            dbTable.DeptId = request.DeptId;
+            dbTable.DeptId = employee.DeptId;
             dbTable.DateTime = DateTime.UtcNow;
             _context.Requests.Add(dbTable);
             _context.SaveChanges();
