@@ -250,7 +250,7 @@ namespace RequestTracker.Services
             request.Id = maxId + 1;
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
             string requestid = request.Id.ToString();
-            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.Id);
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.EmployeeId);
             var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
 
             RequestModel dbTable = new RequestModel();
@@ -604,7 +604,6 @@ namespace RequestTracker.Services
                         new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
                         new Claim(ClaimTypes.Email, user.Email.ToString()),
                         new Claim(ClaimTypes.Role, role.ToString()),
-
 
                         };
 
