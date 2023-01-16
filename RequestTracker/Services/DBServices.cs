@@ -249,6 +249,9 @@ namespace RequestTracker.Services
             var maxId = idList.Any() ? idList.Max() : 0;
             request.Id = maxId + 1;
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
+            string requestid = request.Id.ToString();
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.Id);
+            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
 
             RequestModel dbTable = new RequestModel();
             dbTable.RequestId = request.Id;
@@ -261,6 +264,15 @@ namespace RequestTracker.Services
             dbTable.DateTime = DateTime.UtcNow;
             _context.Requests.Add(dbTable);
             _context.SaveChanges();
+
+            //send mail to manager
+            string FilePath1 = Directory.GetCurrentDirectory() + "\\adminNotify.html";
+            StreamReader strg = new StreamReader(FilePath1);
+            string MailText1 = strg.ReadToEnd();
+            strg.Close();
+            MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+
+            _email.sendMail(MailText1, manager.ManagerEmail);
         }
 
         //get all requests for managers
