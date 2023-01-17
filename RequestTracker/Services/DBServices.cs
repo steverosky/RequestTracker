@@ -206,7 +206,7 @@ namespace RequestTracker.Services
                 dbTable.Password = EncodePasswordToBase64(user.Password);
                 dbTable.DeptId = user.DepartmentId;
                 dbTable.Status = "InActive";
-                dbTable.RoleId = 1;
+                dbTable.RoleId = user.RoleId;
                 dbTable.ManagerId = user.ManagerId;
                 _context.Employees.Add(dbTable);
                 _context.SaveChanges();
@@ -232,6 +232,7 @@ namespace RequestTracker.Services
             if (employee is not null && pass == user.CurrentPassword)
             {
                 employee.Password = EncodePasswordToBase64(user.NewPassword);
+                employee.Status = "Active";
                 _context.SaveChanges();
             }
             else
@@ -244,35 +245,45 @@ namespace RequestTracker.Services
         //make a product request
         public void MakeRequest(MakeRequestModel request)
         {
-            //retrieve id list and auto increment
-            var idList = _context.Requests.Select(x => x.RequestId).ToList();
-            var maxId = idList.Any() ? idList.Max() : 0;
-            request.Id = maxId + 1;
-            var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
-            string requestid = request.Id.ToString();
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.EmployeeId);
-            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
+            //check if user Status is Active ie. user has changed password
+            if (employee.Status == "Active")
+            {
 
-            RequestModel dbTable = new RequestModel();
-            dbTable.RequestId = request.Id;
-            dbTable.UserId = request.EmployeeId;
-            dbTable.RequestDesc = request.Description;
-            dbTable.CategoryId = request.CategoryId;
-            dbTable.ManagerReview = status;
-            dbTable.AdminReview = status;
-            dbTable.DeptId = employee.DeptId;
-            dbTable.DateTime = DateTime.UtcNow;
-            _context.Requests.Add(dbTable);
-            _context.SaveChanges();
+                //retrieve id list and auto increment
+                var idList = _context.Requests.Select(x => x.RequestId).ToList();
+                var maxId = idList.Any() ? idList.Max() : 0;
+                request.Id = maxId + 1;
+                var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
+                string requestid = request.Id.ToString();
 
-            //send mail to manager
-            string FilePath1 = Directory.GetCurrentDirectory() + "\\adminNotify.html";
-            StreamReader strg = new StreamReader(FilePath1);
-            string MailText1 = strg.ReadToEnd();
-            strg.Close();
-            MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+                var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
 
-            _email.sendMail(MailText1, manager.ManagerEmail);
+                RequestModel dbTable = new RequestModel();
+                dbTable.RequestId = request.Id;
+                dbTable.UserId = request.EmployeeId;
+                dbTable.RequestDesc = request.Description;
+                dbTable.CategoryId = request.CategoryId;
+                dbTable.ManagerReview = status;
+                dbTable.AdminReview = status;
+                dbTable.DeptId = employee.DeptId;
+                dbTable.DateTime = DateTime.UtcNow;
+                _context.Requests.Add(dbTable);
+                _context.SaveChanges();
+
+                //send mail to manager
+                string FilePath1 = Directory.GetCurrentDirectory() + "\\adminNotify.html";
+                StreamReader strg = new StreamReader(FilePath1);
+                string MailText1 = strg.ReadToEnd();
+                strg.Close();
+                MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+
+                _email.sendMail(MailText1, manager.ManagerEmail);
+            }
+            else
+            {
+                throw new Exception("Please change the default password");
+            }
         }
 
         //get all requests for managers

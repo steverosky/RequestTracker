@@ -12,9 +12,7 @@ namespace RequestTracker.Models.BaseModels.RequestModels
         [Required(ErrorMessage = "Valid Email is Required")]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-
+        public string Password { get; set; } = string.Empty;        
         public int DepartmentId { get; set; }
         public int RoleId { get; set; }
         public int ManagerId { get; set; }
