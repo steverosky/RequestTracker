@@ -245,18 +245,16 @@ namespace RequestTracker.Services
         //make a product request
         public void MakeRequest(MakeRequestModel request)
         {
+            //retrieve id list and auto increment
+            var idList = _context.Requests.Select(x => x.RequestId).ToList();
+            var maxId = idList.Any() ? idList.Max() : 0;
+            request.Id = maxId + 1;
+            var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
+            string requestid = request.Id.ToString();
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.EmployeeId);
             //check if user Status is Active ie. user has changed password
             if (employee.Status == "Active")
-            {
-
-                //retrieve id list and auto increment
-                var idList = _context.Requests.Select(x => x.RequestId).ToList();
-                var maxId = idList.Any() ? idList.Max() : 0;
-                request.Id = maxId + 1;
-                var status = _context.Status.FirstOrDefault(s => s.StatusId == 1).StatusName;
-                string requestid = request.Id.ToString();
-
+            {          
                 var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
 
                 RequestModel dbTable = new RequestModel();
