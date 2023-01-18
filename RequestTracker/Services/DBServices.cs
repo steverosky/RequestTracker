@@ -203,7 +203,7 @@ namespace RequestTracker.Services
                 dbTable.UserId = user.Id;
                 dbTable.Name = user.Name;
                 dbTable.Email = user.Email;
-                dbTable.Password = EncodePasswordToBase64(user.Password);
+                dbTable.Password = user.Password;
                 dbTable.DeptId = user.DepartmentId;
                 dbTable.Status = "InActive";
                 dbTable.RoleId = user.RoleId;
