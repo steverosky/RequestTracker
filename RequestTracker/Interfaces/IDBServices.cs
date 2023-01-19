@@ -21,11 +21,13 @@ namespace RequestTracker.Interfaces
         public List<GetRequestsModelEmployee> GetRequestsEmployee(int stat);
         public void ApproveRequest(int id);
         public void RejectRequest(int id, string reason);
+        public void SeeAdminRequest(int id);
+
         //public List<GetRequestsModel> GetRequestsById(int stat);
 
 
 
 
-        
+
       }
 }

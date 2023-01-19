@@ -279,6 +279,25 @@ namespace RequestTracker.Controllers
             }
 
         }
+
+        //Approve Request  api/<UserController>/6
+        [HttpPost]
+        [Route("SeeAdminRequest")]
+        public IActionResult SeeAdminRequest(int id)
+        {
+            try
+            {
+                ResponseType type = ResponseType.Success;
+                _db.SeeAdminRequest(id);
+                return Ok(ResponseHandler.GetAppResponse(type, "Request Reviewed (See Admin)"));
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+
+        }
     }
 }
 

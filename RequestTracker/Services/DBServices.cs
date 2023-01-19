@@ -220,7 +220,7 @@ namespace RequestTracker.Services
                 MailText = MailText.Replace("[username]", user.Name).Replace("[email]", user.Email).Replace("[Password]", Password).Replace("[logo]", "cid:image1");
 
                 //send mail
-                _email.sendMail(MailText, user.Email);
+                _email.sendMail("Welcome to Request Tracker", MailText, user.Email);
             }
         }
 
@@ -276,7 +276,7 @@ namespace RequestTracker.Services
                 strg.Close();
                 MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
-                _email.sendMail(MailText1, manager.ManagerEmail);
+                _email.sendMail("NEW REQUEST", MailText1, manager.ManagerEmail);
             }
             else
             {
@@ -368,9 +368,13 @@ namespace RequestTracker.Services
                 }                
                 else if (stat == 3)
                 {
-                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review || x.AdminReview == "See Admin").ToList();
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
                 }
-               
+                else if (stat == 4)
+                {
+                    dataList = _context.Requests.Where(x => x.ManagerReview == "Approved" && x.AdminReview == review).ToList();
+                }
+
                 else if(stat == 5)// where 5 = all requests
                 {
                     dataList = _context.Requests.ToList();
@@ -503,7 +507,7 @@ namespace RequestTracker.Services
                 str.Close();
                 MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
                                 
-                _email.sendMail(MailText, employee.Email);
+                _email.sendMail("REQUEST APPROVED (MANAGER)", MailText, employee.Email);
 
                 //send mail to admin
                 string FilePath1 = Directory.GetCurrentDirectory() + "\\adminNotify.html";
@@ -512,7 +516,7 @@ namespace RequestTracker.Services
                 strg.Close();
                 MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
-                _email.sendMail(MailText1, admin);
+                _email.sendMail("NEW REQUEST", MailText1, admin);
             }
             else if (request is not null && role == "admin")
             {
@@ -525,8 +529,8 @@ namespace RequestTracker.Services
                 str.Close();
                 MailText = MailText.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
-                _email.sendMail(MailText, employee.Email);
-                _email.sendMail(MailText, manager.ManagerEmail);
+                _email.sendMail("REQUEST APPROVED (ADMIN)", MailText, employee.Email);
+                _email.sendMail("REQUEST APPROVED (ADMIN)", MailText, manager.ManagerEmail);
             }
             else
             {
@@ -561,9 +565,9 @@ namespace RequestTracker.Services
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[who]", "Manager").Replace("[reason]", reason);
+                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[reason]", reason);
 
-                _email.sendMail(MailText, employee.Email);
+                _email.sendMail("REQUEST REJECTED (MANAGER)", MailText, employee.Email);
             }
             else if (request is not null && role == "admin")
             {
@@ -576,10 +580,10 @@ namespace RequestTracker.Services
                 StreamReader str = new StreamReader(FilePath);
                 string MailText = str.ReadToEnd();
                 str.Close();
-                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[who]", "Admin").Replace("[reason]", reason);
+                MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[reason]", reason);
 
-                _email.sendMail(MailText, employee.Email);
-                _email.sendMail(MailText, manager.ManagerEmail);
+                _email.sendMail("REQUEST REJECTED (ADMIN)", MailText, employee.Email);
+                _email.sendMail("REQUEST REJECTED (ADMIN)", MailText, manager.ManagerEmail);
             }
             else
             {
@@ -588,7 +592,39 @@ namespace RequestTracker.Services
 
         }
 
-       
+        //See admin request
+        public void SeeAdminRequest(int id)
+        {
+            //get role of user for approval
+            var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+
+            //retrieve employee, status and requests info from db
+            var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
+            var status = _context.Status.FirstOrDefault(s => s.StatusId == 4).StatusName;
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
+
+            string requestid = request.RequestId.ToString();
+            if (request is not null && role == "admin")
+            {
+                request.AdminReview = status;
+                _context.SaveChanges();
+
+                string FilePath = Directory.GetCurrentDirectory() + "\\seeAdmin.html";
+                StreamReader str = new StreamReader(FilePath);
+                string MailText = str.ReadToEnd();
+                str.Close();
+                MailText = MailText.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
+
+                _email.sendMail("More Details Needed", MailText, employee.Email);
+            }
+            else
+            {
+                throw new Exception("Invalid request");
+            }
+
+        }
+
+
         public async Task<object> CreateTokenAsync(string email, string password)
         {
             var token1 = "";
