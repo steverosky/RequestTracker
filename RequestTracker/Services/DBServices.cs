@@ -120,8 +120,8 @@ namespace RequestTracker.Services
                     var dept = _context.Departments.FirstOrDefault(d => d.DeptId == row.DeptId).DeptName;
 
                     // Retrieve the name of the employee's manager
-                    var manager = _context.Employees.FirstOrDefault(m => m.UserId == row.ManagerId).Name;
-
+                    var manager = _context.Managers.FirstOrDefault(m => m.DeptId == row.DeptId).ManagerName;
+                                       
                     // Retrieve the name of the employee's role
                     var role = _context.Roles.FirstOrDefault(r => r.RoleId == row.RoleId).RoleName;
 
@@ -158,7 +158,7 @@ namespace RequestTracker.Services
             if (employee is not null && roleclaim == "admin")
             {
                 var dept = _context.Departments.FirstOrDefault(d => d.DeptId == employee.DeptId).DeptName;
-                var manager = _context.Employees.FirstOrDefault(m => m.UserId == employee.ManagerId).Name;
+                var manager = _context.Managers.FirstOrDefault(m => m.DeptId == employee.DeptId).ManagerName;
                 var role = _context.Roles.FirstOrDefault(r => r.RoleId == employee.RoleId).RoleName;
                 return new GetUsersModel()
                 {
@@ -197,6 +197,7 @@ namespace RequestTracker.Services
                 user.Id = maxId + 1;
                 string Password = DefaultPass();
                 user.Password = EncodePasswordToBase64(Password);
+                var managerId = _context.Managers.FirstOrDefault(m => m.DeptId == user.DepartmentId).ManagerId;
 
 
                 EmployeeModel dbTable = new EmployeeModel();
@@ -207,7 +208,7 @@ namespace RequestTracker.Services
                 dbTable.DeptId = user.DepartmentId;
                 dbTable.Status = "InActive";
                 dbTable.RoleId = user.RoleId;
-                dbTable.ManagerId = user.ManagerId;
+                dbTable.ManagerId = managerId;
                 _context.Employees.Add(dbTable);
                 _context.SaveChanges();
 

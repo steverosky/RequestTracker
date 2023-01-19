@@ -15,7 +15,6 @@ namespace RequestTracker.Models.BaseModels.RequestModels
         public string Password { get; set; } = string.Empty;        
         public int DepartmentId { get; set; }
         public int RoleId { get; set; }
-        public int ManagerId { get; set; }
 
     }
 }
