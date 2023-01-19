@@ -1,4 +1,3 @@
-﻿using Microsoft.AspNetCore.Hosting.Server;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
@@ -58,16 +57,6 @@ namespace RequestTracker.Services
                 {
                     try
                     {
-                        // Open the image file from directory and attach it to the email
-                        //var imagePath = "cyberteqLogo.png";
-                        //var image = new Attachment(imagePath);
-                        //message.Attachments.Add(image);
-
-
-                        // Set the Content-ID of the image
-                        //image.ContentId = "image1";
-
-
                         AlternateView htmlView = AlternateView.CreateAlternateViewFromString(body, null, "text/html");
                         AlternateView imagelink = new AlternateView("cyberteqLogo.png", MediaTypeNames.Image.Jpeg)
                         { //var imageView =new AlternateView("cyberteqLogo.png", MediaTypeNames.Image.Jpeg);
@@ -75,10 +64,7 @@ namespace RequestTracker.Services
                             ContentId = "image1",
                             TransferEncoding = TransferEncoding.Base64
                         };
-                        //htmlView.AlternateView.Add(imagelink);
-
-
-
+                       
                         message.AlternateViews.Add(htmlView);
                         message.AlternateViews.Add(imagelink);
 
