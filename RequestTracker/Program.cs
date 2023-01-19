@@ -41,6 +41,12 @@ options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 
 });
 
+//add email service
+var emailConfig = builder.Configuration
+        .GetSection("EmailConfiguration")
+        .Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+
 
 
 builder.Services.AddCors(options =>

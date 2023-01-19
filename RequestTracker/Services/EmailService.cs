@@ -1,26 +1,38 @@
-﻿using System.Net.Mail;
-using System.Net;
-using RequestTracker.Interfaces;
-using RequestTracker.Models.BaseModels.RequestModels;
-using RequestTracker.Models.BaseModels.ResponseModels;
-using RequestTracker.Models.DBModels;
+﻿using System.Net;
+using System.Net.Mail;
 
 namespace RequestTracker.Services
 {
+    public class EmailConfiguration
+
+    {
+        public string From { get; set; } 
+        public string DisplayName { get; set; }
+        public string Password { get; set; }
+    }
     public interface IEmailService
     {
-        void sendMail(string msg, string recipientEmail);
+        void sendMail(string subj, string msg, string recipientEmail);
     }
     public class EmailService : IEmailService
     {
-        public void sendMail(string msg, string recipientEmail)
+        private readonly EmailConfiguration _emailConfig;
+        public EmailService(EmailConfiguration emailConfig)
+        {
+           _emailConfig = emailConfig;
+        }
+
+
+
+        public void sendMail(string subj, string msg, string recipientEmail)
         {
             try
             {
-                var fromAddress = new MailAddress("donotreplyme1234@gmail.com");
+                var fromAddress = new MailAddress(_emailConfig.From, _emailConfig.DisplayName);
                 var toAddress = new MailAddress(recipientEmail);
-                string fromPassword = "okcnmpqkrwkjuexg";
-                string subject = "Registered for Heaven";
+                string fromPassword = _emailConfig.Password;
+                string diplayname = _emailConfig.DisplayName;
+                string subject = subj;
                 string body = msg;
                 var smtp = new SmtpClient
                 {
@@ -38,7 +50,7 @@ namespace RequestTracker.Services
                     Subject = subject,
                     Body = body,
                     IsBodyHtml = true
-
+                    
                 })
 
                 {
@@ -48,7 +60,7 @@ namespace RequestTracker.Services
                         var imagePath = "cyberteqLogo.png";
                         var image = new Attachment(imagePath);
                         message.Attachments.Add(image);
-                        
+
 
                         // Set the Content-ID of the image
                         image.ContentId = "image1";
