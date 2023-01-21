@@ -18,6 +18,7 @@ namespace RequestTracker.Models.DBModels
         public int DeptId { get; set; }
         public int RoleId { get; set; }
         public int ManagerId { get; set; }
+        public bool IsDeleted { get; set; } = false;
         
 
     }
