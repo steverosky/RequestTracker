@@ -108,7 +108,7 @@ namespace RequestTracker.Services
         public List<GetUsersModel> GetEmployees()
         {
             var roleclaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
-            if (roleclaim == "admin")
+            if (roleclaim == "Admin")
             {
                 List<GetUsersModel> response = new List<GetUsersModel>();
 
@@ -155,7 +155,7 @@ namespace RequestTracker.Services
 
             GetUsersModel response = new GetUsersModel();
             var employee = _context.Employees.FirstOrDefault(e => e.Email == email);
-            if (employee is not null && roleclaim == "admin")
+            if (employee is not null && roleclaim == "Admin")
             {
                 var dept = _context.Departments.FirstOrDefault(d => d.DeptId == employee.DeptId).DeptName;
                 var manager = _context.Managers.FirstOrDefault(m => m.DeptId == employee.DeptId).ManagerName;
@@ -189,7 +189,7 @@ namespace RequestTracker.Services
             {
                 throw new Exception("email already exists");
             }
-            else if (role == "admin")
+            else if (role == "Admin")
             {
                 var idList = _context.Employees.Select(x => x.UserId).ToList();
                 var maxId = idList.Any() ? idList.Max() : 0;
@@ -256,7 +256,7 @@ namespace RequestTracker.Services
             //check if user Status is Active ie. user has changed password
             if (employee.Status == "Active")
             {          
-                var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
+                var manager = _context.Employees.FirstOrDefault(m => m.RoleId==3 && m.DeptId== employee.DeptId);
 
                 RequestModel dbTable = new RequestModel();
                 dbTable.RequestId = request.Id;
@@ -277,7 +277,7 @@ namespace RequestTracker.Services
                 strg.Close();
                 MailText1 = MailText1.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
-                _email.sendMail("NEW REQUEST", MailText1, manager.ManagerEmail);
+                _email.sendMail("NEW REQUEST", MailText1, manager.Email);
             }
             else
             {
@@ -290,7 +290,7 @@ namespace RequestTracker.Services
         {
             var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
             var email = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
-            if (role == "manager")
+            if (role == "Manager")
             {
                 List<GetRequestsModel> response = new List<GetRequestsModel>();
                 //get the department of the manager
@@ -354,7 +354,7 @@ namespace RequestTracker.Services
         public List<GetRequestsModelAdmin> GetRequestsAdmin(int stat)
         {
             var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
-            if (role == "admin")
+            if (role == "Admin")
             {
                 var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
                 List<GetRequestsModelAdmin> response = new List<GetRequestsModelAdmin>();
@@ -484,7 +484,7 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 2).StatusName;
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
-            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId);
             //var admin = _context.Employees.FirstOrDefault(a => a.RoleId == 2);
             var admin = (from u in _context.Employees
                          join r in _context.Roles on u.RoleId equals r.RoleId
@@ -494,7 +494,7 @@ namespace RequestTracker.Services
             string requestid = request.RequestId.ToString();
 
             //if role is manager
-            if (request is not null && role == "manager")
+            if (request is not null && role == "Manager")
             {
                 
                 request.ManagerReview = status;
@@ -519,7 +519,7 @@ namespace RequestTracker.Services
 
                 _email.sendMail("NEW REQUEST", MailText1, admin);
             }
-            else if (request is not null && role == "admin")
+            else if (request is not null && role == "Admin")
             {
                 request.AdminReview = status;
                 _context.SaveChanges();
@@ -531,7 +531,7 @@ namespace RequestTracker.Services
                 MailText = MailText.Replace("[requestid]", requestid).Replace("[logo]", "cid:image1");
 
                 _email.sendMail("REQUEST APPROVED (ADMIN)", MailText, employee.Email);
-                _email.sendMail("REQUEST APPROVED (ADMIN)", MailText, manager.ManagerEmail);
+                _email.sendMail("REQUEST APPROVED (ADMIN)", MailText, manager.Email);
             }
             else
             {
@@ -550,13 +550,13 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == id);
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 3).StatusName;
-            var manager = _context.Managers.FirstOrDefault(m => m.ManagerId == employee.ManagerId);
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId);
 
 
             string requestid = request.RequestId.ToString();
 
             //if role is manager
-            if (request is not null && role == "manager")
+            if (request is not null && role == "Manager")
             {
                 request.ManagerReview = status;
                 request.RejectReason = reason;
@@ -570,7 +570,7 @@ namespace RequestTracker.Services
 
                 _email.sendMail("REQUEST REJECTED (MANAGER)", MailText, employee.Email);
             }
-            else if (request is not null && role == "admin")
+            else if (request is not null && role == "Admin")
             {
                 request.AdminReview = status;
                 request.RejectReason = reason;
@@ -584,7 +584,7 @@ namespace RequestTracker.Services
                 MailText = MailText.Replace("[username]", employee.Name).Replace("[requestid]", requestid).Replace("[logo]", "cid:image1").Replace("[reason]", reason);
 
                 _email.sendMail("REQUEST REJECTED (ADMIN)", MailText, employee.Email);
-                _email.sendMail("REQUEST REJECTED (ADMIN)", MailText, manager.ManagerEmail);
+                _email.sendMail("REQUEST REJECTED (ADMIN)", MailText, manager.Email);
             }
             else
             {
@@ -605,7 +605,7 @@ namespace RequestTracker.Services
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
 
             string requestid = request.RequestId.ToString();
-            if (request is not null && role == "admin")
+            if (request is not null && role == "Admin")
             {
                 request.AdminReview = status;
                 _context.SaveChanges();

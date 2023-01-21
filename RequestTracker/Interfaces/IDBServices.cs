@@ -22,6 +22,7 @@ namespace RequestTracker.Interfaces
         public void ApproveRequest(int id);
         public void RejectRequest(int id, string reason);
         public void SeeAdminRequest(int id);
+        public void DeleteUser(int id);
 
         //public List<GetRequestsModel> GetRequestsById(int stat);
 
