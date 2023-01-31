@@ -243,7 +243,7 @@ namespace RequestTracker.Controllers
         //Approve Request  api/<UserController>/6
         [HttpPost]
         [Route("ApproveRequest")]
-        public IActionResult ApproveRequest(int id)
+        public IActionResult ApproveRequest(string id)
         {
             try
             {
@@ -263,7 +263,7 @@ namespace RequestTracker.Controllers
         //Reject Request  api/<UserController>/6
         [HttpPost]
         [Route("RejectRequest")]
-        public IActionResult RejectRequest(int id, string reason)
+        public IActionResult RejectRequest(string id, string reason)
         {
             try
             {
@@ -282,7 +282,7 @@ namespace RequestTracker.Controllers
         //Approve Request  api/<UserController>/6
         [HttpPost]
         [Route("SeeAdminRequest")]
-        public IActionResult SeeAdminRequest(int id)
+        public IActionResult SeeAdminRequest(string id)
         {
             try
             {
