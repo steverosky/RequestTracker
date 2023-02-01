@@ -19,11 +19,6 @@ namespace RequestTracker.Interfaces
         public List<GetRequestsModel> GetRequests(int stat);
         public List<GetRequestsModelAdmin> GetRequestsAdmin(int stat);
         public List<GetRequestsModelEmployee> GetRequestsEmployee(int stat);
-<<<<<<< Updated upstream
-        public void ApproveRequest(int id);
-        public void RejectRequest(int id, string reason);
-        public void SeeAdminRequest(int id);
-=======
         public void ApproveRequest(string id);
         public void RejectRequest(string id, string reason);
         public void SeeAdminRequest(string id);
@@ -31,7 +26,6 @@ namespace RequestTracker.Interfaces
         public List<GetRequestsModelAdmin> GetKeyword(string keyword);
         //public void ForgetPassword(string email);
         //public void ResetPassword(ForgetPassModel request);
->>>>>>> Stashed changes
 
         //public List<GetRequestsModel> GetRequestsById(int stat);
 

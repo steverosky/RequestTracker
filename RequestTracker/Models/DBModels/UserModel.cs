@@ -18,7 +18,10 @@ namespace RequestTracker.Models.DBModels
         public int DeptId { get; set; }
         public int RoleId { get; set; }
         public int ManagerId { get; set; }
-        
+        public bool IsDeleted { get; set; } = false;
+        public string? ResetToken { get; set; }
+        public DateTime? ResetTokenExpires { get; set; }
+
 
     }
 
@@ -41,7 +44,9 @@ namespace RequestTracker.Models.DBModels
         public DateTime DateTime { get; set; }
         [Required]
         public string ManagerReview { get; set; } = string.Empty;
+        public DateTime? MangRevDate { get; set; }
         public string AdminReview { get; set; } = string.Empty;
+        public DateTime? AdminRevDate { get; set; }
         public int DeptId { get; set; }
         [Required]
         public int UserId { get; set; }
