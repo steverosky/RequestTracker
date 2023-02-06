@@ -226,7 +226,7 @@ namespace RequestTracker.Services
         //change password
         public void ChangePass(ChangePassModel user)
         {
-            var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email && e.IsDeleted==false);
+            var employee = _context.Employees.FirstOrDefault(e => e.Email == user.Email && e.IsDeleted == false);
             var pass = DecodeFrom64(employee.Password);
             if (employee is not null && pass == user.CurrentPassword)
             {
@@ -386,7 +386,7 @@ namespace RequestTracker.Services
 
                 else if (stat == 5)// where 5 = all requests
                 {
-                    dataList = _context.Requests.AsNoTracking().ToList();
+                    dataList = _context.Requests.AsNoTracking().Where(x => x.ManagerReview != "Pending").ToList();
                 }
                 else
                 {
@@ -506,7 +506,7 @@ namespace RequestTracker.Services
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == requestid);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 2).StatusName;
             var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
-            var manager = _context.Employees.FirstOrDefault(m => m.RoleId==3 && m.DeptId == employee.DeptId);
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId);
             //var admin = _context.Employees.FirstOrDefault(a => a.RoleId == 2);
             var admin = (from u in _context.Employees
                          join r in _context.Roles on u.RoleId equals r.RoleId
@@ -755,207 +755,252 @@ namespace RequestTracker.Services
         {
             List<GetRequestsModelAdmin> response = new List<GetRequestsModelAdmin>();
             var roleclaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
-            if (roleclaim == "Admin" || roleclaim == "Manager")
+            var email = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
+            var requests = Enumerable.Empty<RequestModel>().AsQueryable();
+            if (roleclaim == "Manager")
             {
                 string requestid = "";
                 if (keyword.Keyword.Any())
                 {
-                     requestid = keyword.Keyword.Substring(2);
+                    requestid = keyword.Keyword.Substring(2);
                 }
                 //search query 
-                var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
-                var requests = from r in _context.Requests
-                               join u in _context.Employees on r.UserId equals u.UserId
-                               join c in _context.Categories on r.CategoryId equals c.CategoryId
-                               join d in _context.Departments on r.DeptId equals d.DeptId
-                               where u.Name.ToLower().Contains(keyword.Keyword.ToLower()) || c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
-                               d.DeptName.ToLower().Contains(keyword.Keyword.ToLower()) || r.RequestId.ToString().Contains(requestid) ||
-                               r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower())                                
-                               select r;
-
-                if (requests.Any())
-                {
-                    foreach (var row in requests.ToList())
-                    {
-                        var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId).Name;
-
-                        // Retrieve the name of the category
-                        var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
-
-                        // Retrieve the name of the employee's department
-                        var department = _context.Departments.FirstOrDefault(d => d.DeptId == row.DeptId).DeptName;
-
-                        //Retrieve the manager of the employee
-                        var managerName = (from u in _context.Employees
-                                           join r in _context.Roles on u.RoleId equals r.RoleId
-                                           where r.RoleId == 3 && u.DeptId == row.DeptId
-                                           select u.Name).FirstOrDefault();
-
-                        response.Add(new GetRequestsModelAdmin()
-                        {
-                            RequestId = "RQ" + row.RequestId,
-                            Description = row.RequestDesc,
-                            Category = category,
-                            Name = employee,
-                            Department = department,
-                            DateTime = row.DateTime,
-                            ManangerReview = row.ManagerReview,
-                            MangApprovedDate = row.MangRevDate,
-                            AdminReview = row.AdminReview,
-                            AdminApprovedDate = row.AdminRevDate,
-                            Manager = managerName,
-                            Reason = row.RejectReason
-
-                        });
-                    }
-                }
-                else
-                {
-                    throw new Exception("No Records found");
-                }
+                var deptId = _context.Employees.Where(x => x.Email == email && x.IsDeleted == false).Select(x => x.DeptId).FirstOrDefault();
+                //var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
+                requests = from r in _context.Requests.Where(a => a.DeptId == deptId)
+                           join u in _context.Employees.Where(x => x.IsDeleted == false) on r.UserId equals u.UserId
+                           join c in _context.Categories on r.CategoryId equals c.CategoryId                           
+                           where u.Name.ToLower().Contains(keyword.Keyword.ToLower()) ||
+                           c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
+                           r.RequestId.ToString().Contains(requestid) ||
+                           r.ManagerReview.ToLower().Contains(keyword.Keyword.ToLower())
+                           select r;
             }
+
+            else if (roleclaim == "Admin")
+            {
+                string requestid = "";
+                if (keyword.Keyword.Any())
+                {
+                    requestid = keyword.Keyword.Substring(2);
+                }
+                //search query 
+                //var deptId = _context.Employees.Where(x => x.Email == email && x.IsDeleted == false).Select(x => x.DeptId).FirstOrDefault();
+                //var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
+                requests = from r in _context.Requests.AsNoTracking().Where(x => x.ManagerReview == "Approved")
+                           join u in _context.Employees.Where(x => x.IsDeleted == false) on r.UserId equals u.UserId
+                           join c in _context.Categories on r.CategoryId equals c.CategoryId
+                           join d in _context.Departments on r.DeptId equals d.DeptId
+                           where u.Name.ToLower().Contains(keyword.Keyword.ToLower()) || c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
+                           d.DeptName.ToLower().Contains(keyword.Keyword.ToLower()) || r.RequestId.ToString().Contains(requestid) ||
+                           r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower()) 
+                           select r;
+            }
+
+            else if(roleclaim.Any())
+            {
+                string requestid = "";
+                if (keyword.Keyword.Any())
+                {
+                    requestid = keyword.Keyword.Substring(2);
+                }
+                //search query 
+                var userid = _context.Employees.Where(x => x.Email == email && x.IsDeleted == false).Select(x => x.UserId).FirstOrDefault();
+                //var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
+                requests = from r in _context.Requests.AsNoTracking().Where(x => x.UserId == userid)
+                           join c in _context.Categories on r.CategoryId equals c.CategoryId                           
+                           where c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
+                           r.RequestId.ToString().Contains(requestid) ||
+                           r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower())
+                           select r;
+            }
+
             else
             {
                 throw new Exception("UnAuthorized");
             }
-            return response.OrderByDescending(e => e.RequestId).ToList();
+
+
+            if (requests.Any())
+            {
+                foreach (var row in requests.ToList())
+                {
+                    var employee = _context.Employees.FirstOrDefault(e => e.UserId == row.UserId && e.IsDeleted == false).Name;
+
+                    // Retrieve the name of the category
+                    var category = _context.Categories.FirstOrDefault(c => c.CategoryId == row.CategoryId).CategoryName;
+
+                    // Retrieve the name of the employee's department
+                    var department = _context.Departments.FirstOrDefault(d => d.DeptId == row.DeptId).DeptName;
+
+                    //Retrieve the manager of the employee
+                    var managerName = (from u in _context.Employees.Where(a => a.IsDeleted == false)
+                                       join r in _context.Roles on u.RoleId equals r.RoleId
+                                       where r.RoleId == 3 && u.DeptId == row.DeptId
+                                       select u.Name).FirstOrDefault();
+
+                    response.Add(new GetRequestsModelAdmin()
+                    {
+                        RequestId = "RQ" + row.RequestId,
+                        Description = row.RequestDesc,
+                        Category = category,
+                        Name = employee,
+                        Department = department,
+                        DateTime = row.DateTime,
+                        ManangerReview = row.ManagerReview,
+                        MangApprovedDate = row.MangRevDate,
+                        AdminReview = row.AdminReview,
+                        AdminApprovedDate = row.AdminRevDate,
+                        Manager = managerName,
+                        Reason = row.RejectReason
+
+                    });
+                }
+                return response.OrderByDescending(e => e.RequestId).ToList();
+            }
+            else
+            {
+                throw new Exception("No Records found");
+            }
         }
 
-        //dashboard for admin
-
-
-        ////forget password
-        //public void ForgetPassword(string email)
-        //{
-        //    var user = _context.Employees.FirstOrDefault(e => e.Email == email);
-        //    //var pass = DecodeFrom64(employee.Password);
-        //    if (user is not null)
-        //    {
-        //        user.ResetToken = CreateRandomtoken();
-        //        user.ResetTokenExpires = DateTime.UtcNow.AddMinutes(30);
-        //        _context.SaveChanges();
-
-        //        //generate password reset url
-        //        string url = string.Format("https ://localhost:7015/api/User/ResetPassword?&token={0}&email={1}&timestamp={2}",
-        //                         HttpUtility.UrlEncode(user.ResetToken),
-        //                         HttpUtility.UrlEncode(email),
-        //                         HttpUtility.UrlEncode(user.ResetTokenExpires.ToString()));
-
-        //        //send email
-        //        string FilePath = Directory.GetCurrentDirectory() + "\\seeAdmin.html";
-        //        StreamReader str = new StreamReader(FilePath);
-        //        string MailText = str.ReadToEnd();
-        //        str.Close();
-        //        MailText = MailText.Replace("[logo]", "cid:image1").Replace("[url]", url);
-
-        //        _email.sendMail("Reset Your Password", MailText, email);
-        //    }
-        //    else
-        //    {
-        //        throw new Exception("Email not found");
-        //    }
-
-        //}
-
-        ////reset password
-        //public void ResetPassword(ForgetPassModel request)
-        //{
-        //    var user = _context.Employees.FirstOrDefault(e => e.ResetToken == request.ResetToken);
-        //    //var pass = DecodeFrom64(employee.Password);
-        //    if (user == null || user.ResetTokenExpires < DateTime.UtcNow)
-        //    {
-        //        throw new Exception("Invalid token");
-        //    }
-
-
-
-
-        //}
-        ////Assign roles
-        //public void AssignRoles(userModel userModel)
-        //{
-        //    User response = new User();
-        //    var EmailList = _context.Users.Select(dbTable => dbTable.Email).ToList();
-
-        //    if (EmailList.Contains(userModel.Email))
-        //    {
-        //        var dbTable = _context.Users.Where(d => d.Email == userModel.Email).FirstOrDefault();
-        //        if (dbTable != null)
-        //        {
-        //            if (userModel.Role == "admin" || userModel.Role == "user")
-        //            {
-        //                dbTable.Role = userModel.Role;
-        //                _context.Users.Update(dbTable);
-        //                _context.SaveChanges();
-        //            }
-        //            else
-        //            {
-        //                throw new Exception("Invalid Role");
-        //            }
-        //        }
-        //    }
-        //}
-
-
-
-
-        // var user1 = _context.Employees.FirstOrDefault(u => u.ResetToken == user.ResetToken);
-        //if(employee ==null)
-
-        //else
-        //{
-        //    throw new Exception("Invalid email or password");
-        //}
-
-
-
-        //private string CreateRandomtoken()
-        //{
-        //    return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        //}
-
-
-
-        //public void SendPasswordResetLink(ForgetPassModel request)
-        //{
-        //    var user = _context.GetUserByEmail(request.Email);
-
-        //    if (user == null)
-        //    {
-        //        throw new InvalidOperationException("The email address provided is not associated with any account.");
-        //    }
-
-        //    request.Token = GenerateToken();
-        //    request.Expiration = DateTime.Now.AddMinutes(15);
-        //    _context.SavePasswordResetToken(request.Email, request.Token, request.Expiration);
-
-        //    var resetLink = $"{request.Url}?token={request.Token}&email={request.Email}";
-        //    _emailService.SendPasswordResetEmail(request.Email, resetLink);
-        //}
-
-        //public bool ValidateToken(string token, string email)
-        //{
-        //    var passwordReset = _userRepository.GetPasswordResetToken(email);
-
-        //    if (passwordReset == null)
-        //    {
-        //        return false;
-        //    }
-
-        //    if (passwordReset.Expiration < DateTime.Now)
-        //    {
-        //        _userRepository.DeletePasswordResetToken(email);
-        //        return false;
-        //    }
-
-        //    if (passwordReset.Token != token)
-        //    {
-        //        return false;
-        //    }
-
-        //}
     }
+
 }
+
+//dashboard for admin
+
+
+////forget password
+//public void ForgetPassword(string email)
+//{
+//    var user = _context.Employees.FirstOrDefault(e => e.Email == email);
+//    //var pass = DecodeFrom64(employee.Password);
+//    if (user is not null)
+//    {
+//        user.ResetToken = CreateRandomtoken();
+//        user.ResetTokenExpires = DateTime.UtcNow.AddMinutes(30);
+//        _context.SaveChanges();
+
+//        //generate password reset url
+//        string url = string.Format("https ://localhost:7015/api/User/ResetPassword?&token={0}&email={1}&timestamp={2}",
+//                         HttpUtility.UrlEncode(user.ResetToken),
+//                         HttpUtility.UrlEncode(email),
+//                         HttpUtility.UrlEncode(user.ResetTokenExpires.ToString()));
+
+//        //send email
+//        string FilePath = Directory.GetCurrentDirectory() + "\\seeAdmin.html";
+//        StreamReader str = new StreamReader(FilePath);
+//        string MailText = str.ReadToEnd();
+//        str.Close();
+//        MailText = MailText.Replace("[logo]", "cid:image1").Replace("[url]", url);
+
+//        _email.sendMail("Reset Your Password", MailText, email);
+//    }
+//    else
+//    {
+//        throw new Exception("Email not found");
+//    }
+
+//}
+
+////reset password
+//public void ResetPassword(ForgetPassModel request)
+//{
+//    var user = _context.Employees.FirstOrDefault(e => e.ResetToken == request.ResetToken);
+//    //var pass = DecodeFrom64(employee.Password);
+//    if (user == null || user.ResetTokenExpires < DateTime.UtcNow)
+//    {
+//        throw new Exception("Invalid token");
+//    }
+
+
+
+
+//}
+////Assign roles
+//public void AssignRoles(userModel userModel)
+//{
+//    User response = new User();
+//    var EmailList = _context.Users.Select(dbTable => dbTable.Email).ToList();
+
+//    if (EmailList.Contains(userModel.Email))
+//    {
+//        var dbTable = _context.Users.Where(d => d.Email == userModel.Email).FirstOrDefault();
+//        if (dbTable != null)
+//        {
+//            if (userModel.Role == "admin" || userModel.Role == "user")
+//            {
+//                dbTable.Role = userModel.Role;
+//                _context.Users.Update(dbTable);
+//                _context.SaveChanges();
+//            }
+//            else
+//            {
+//                throw new Exception("Invalid Role");
+//            }
+//        }
+//    }
+//}
+
+
+
+
+// var user1 = _context.Employees.FirstOrDefault(u => u.ResetToken == user.ResetToken);
+//if(employee ==null)
+
+//else
+//{
+//    throw new Exception("Invalid email or password");
+//}
+
+
+
+//private string CreateRandomtoken()
+//{
+//    return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+//}
+
+
+
+//public void SendPasswordResetLink(ForgetPassModel request)
+//{
+//    var user = _context.GetUserByEmail(request.Email);
+
+//    if (user == null)
+//    {
+//        throw new InvalidOperationException("The email address provided is not associated with any account.");
+//    }
+
+//    request.Token = GenerateToken();
+//    request.Expiration = DateTime.Now.AddMinutes(15);
+//    _context.SavePasswordResetToken(request.Email, request.Token, request.Expiration);
+
+//    var resetLink = $"{request.Url}?token={request.Token}&email={request.Email}";
+//    _emailService.SendPasswordResetEmail(request.Email, resetLink);
+//}
+
+//public bool ValidateToken(string token, string email)
+//{
+//    var passwordReset = _userRepository.GetPasswordResetToken(email);
+
+//    if (passwordReset == null)
+//    {
+//        return false;
+//    }
+
+//    if (passwordReset.Expiration < DateTime.Now)
+//    {
+//        _userRepository.DeletePasswordResetToken(email);
+//        return false;
+//    }
+
+//    if (passwordReset.Token != token)
+//    {
+//        return false;
+//    }
+
+//}
 
 
 ////get all requests by keyword
