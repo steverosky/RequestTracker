@@ -19,8 +19,8 @@ namespace RequestTracker.Models.DBModels
         public int RoleId { get; set; }
         public int ManagerId { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public string? ResetToken { get; set; }
-        public DateTime? ResetTokenExpires { get; set; }
+        //public string? ResetToken { get; set; }
+        //public DateTime? ResetTokenExpires { get; set; }
 
 
     }

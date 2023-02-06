@@ -30,7 +30,7 @@ namespace RequestTracker.Controllers
 
 
         // GET: api/<UserController>
-        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "Admin")]
         [HttpGet]
         [Route("GetUsers")]
         public IActionResult Get()
@@ -55,7 +55,7 @@ namespace RequestTracker.Controllers
         }
 
         // GET api/<UserController>/5
-        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "Admin")]
         [HttpGet]
         [Route("GetUserByEmail")]
         public IActionResult Get(string email)
@@ -79,7 +79,7 @@ namespace RequestTracker.Controllers
         }
 
         // POST api/<UserController>
-        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "Admin")]
         [HttpPost]
         [Route("AddUser")]
         public IActionResult Post([FromBody] AddUserModel model)
@@ -322,7 +322,7 @@ namespace RequestTracker.Controllers
         //search keyword
         [HttpGet]
         [Route("Search")]
-        public IActionResult Search(string keyword)
+        public IActionResult Search(Search keyword)
         {
             ResponseType type = ResponseType.Success;
             try

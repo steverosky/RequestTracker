@@ -23,7 +23,7 @@ namespace RequestTracker.Interfaces
         public void RejectRequest(string id, string reason);
         public void SeeAdminRequest(string id);
         public void DeleteUser(int id);
-        public List<GetRequestsModelAdmin> GetKeyword(string keyword);
+        public List<GetRequestsModelAdmin> GetKeyword(Search keyword);
         //public void ForgetPassword(string email);
         //public void ResetPassword(ForgetPassModel request);
 
