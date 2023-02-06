@@ -670,6 +670,7 @@ namespace RequestTracker.Services
 
                 var user = await GetUser(email, password);
 
+                var role = _context.Roles.FirstOrDefault(r => r.RoleId == user.RoleId).RoleName;
 
                 if (user != null)
                 {

@@ -23,15 +23,9 @@ namespace RequestTracker.Interfaces
         public void RejectRequest(string id, string reason);
         public void SeeAdminRequest(string id);
         public void DeleteUser(int id);
-<<<<<<<<< Temporary merge branch 1
-        //public void ForgetPassword(string email);
-        //public void ResetPassword(ForgetPassModel request);
-=========
         public List<GetRequestsModelAdmin> GetKeyword(string keyword);
         //public void ForgetPassword(string email);
         //public void ResetPassword(ForgetPassModel request);
->>>>>>> Stashed changes
->>>>>>>>> Temporary merge branch 2
 
         //public List<GetRequestsModel> GetRequestsById(int stat);
 
