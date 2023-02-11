@@ -13,6 +13,6 @@ namespace RequestTracker.Models.BaseModels.ResponseModels
         public double ExpiryTime { get; set; }
         public int DeptId { get; set; }
         public int RoleId { get; set; }
-        public int ManagerId { get; set; }
+        public int? ManagerId { get; set; }
     }
 }

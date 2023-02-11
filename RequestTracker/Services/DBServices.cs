@@ -14,8 +14,8 @@ namespace RequestTracker.Services
 {
     public class DBServices : IDBServices
     {
-        private EF_dataContext _context;
-        private IEmailService _email;
+        private readonly EF_dataContext _context;
+        private readonly IEmailService _email;
         public IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -442,8 +442,11 @@ namespace RequestTracker.Services
             //var role = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
             var email = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
 
+            var user = _context.Employees.FirstOrDefault(x => x.Email == email && x.IsDeleted == false);
             var id = _context.Employees.Where(x => x.Email == email).Select(x => x.UserId).FirstOrDefault();
             var dataList1 = _context.Requests.Where(e => e.UserId == id).ToList();
+            var deptName = _context.Departments.FirstOrDefault(d => d.DeptId == user.DeptId).DeptName;
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == user.DeptId && m.IsDeleted == false).Name;
 
             var review = _context.Status.FirstOrDefault(s => s.StatusId == stat).StatusName;
             var dataList = new List<RequestModel>();
@@ -484,6 +487,10 @@ namespace RequestTracker.Services
                     DateTime = row.DateTime,
                     ManangerReview = row.ManagerReview,
                     AdminReview = row.AdminReview,
+                    AdminApprovedDate = row.AdminRevDate,
+                    MangApprovedDate = row.MangRevDate,
+                    Manager = manager,
+                    Department = deptName,
                     Reason = row.RejectReason
 
                 });
@@ -505,10 +512,10 @@ namespace RequestTracker.Services
             //retrieve status and requests from db
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == requestid);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 2).StatusName;
-            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
-            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId);
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId && e.IsDeleted == false);
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId && m.IsDeleted == false);
             //var admin = _context.Employees.FirstOrDefault(a => a.RoleId == 2);
-            var admin = (from u in _context.Employees
+            var admin = (from u in _context.Employees.Where(m => m.IsDeleted == false)
                          join r in _context.Roles on u.RoleId equals r.RoleId
                          where r.RoleId == 2
                          select u.Email).FirstOrDefault();
@@ -577,9 +584,9 @@ namespace RequestTracker.Services
 
             //retrieve status and requests from db
             var request = _context.Requests.FirstOrDefault(r => r.RequestId == requestid);
-            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId);
+            var employee = _context.Employees.FirstOrDefault(e => e.UserId == request.UserId && e.IsDeleted == false);
             var status = _context.Status.FirstOrDefault(s => s.StatusId == 3).StatusName;
-            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId);
+            var manager = _context.Employees.FirstOrDefault(m => m.RoleId == 3 && m.DeptId == employee.DeptId && m.IsDeleted == false);
             //string requestid = request.RequestId.ToString();
 
             //if role is manager
@@ -769,7 +776,7 @@ namespace RequestTracker.Services
                 //var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
                 requests = from r in _context.Requests.Where(a => a.DeptId == deptId)
                            join u in _context.Employees.Where(x => x.IsDeleted == false) on r.UserId equals u.UserId
-                           join c in _context.Categories on r.CategoryId equals c.CategoryId                           
+                           join c in _context.Categories on r.CategoryId equals c.CategoryId
                            where u.Name.ToLower().Contains(keyword.Keyword.ToLower()) ||
                            c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
                            r.RequestId.ToString().Contains(requestid) ||
@@ -793,11 +800,11 @@ namespace RequestTracker.Services
                            join d in _context.Departments on r.DeptId equals d.DeptId
                            where u.Name.ToLower().Contains(keyword.Keyword.ToLower()) || c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
                            d.DeptName.ToLower().Contains(keyword.Keyword.ToLower()) || r.RequestId.ToString().Contains(requestid) ||
-                           r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower()) 
+                           r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower())
                            select r;
             }
 
-            else if(roleclaim.Any())
+            else if (roleclaim.Any())
             {
                 string requestid = "";
                 if (keyword.Keyword.Any())
@@ -808,7 +815,7 @@ namespace RequestTracker.Services
                 var userid = _context.Employees.Where(x => x.Email == email && x.IsDeleted == false).Select(x => x.UserId).FirstOrDefault();
                 //var datee = _context.Requests.Select(d => d.DateTime.Date.ToString("yyyy-MM-dd")).ToList();
                 requests = from r in _context.Requests.AsNoTracking().Where(x => x.UserId == userid)
-                           join c in _context.Categories on r.CategoryId equals c.CategoryId                           
+                           join c in _context.Categories on r.CategoryId equals c.CategoryId
                            where c.CategoryName.ToLower().Contains(keyword.Keyword.ToLower()) ||
                            r.RequestId.ToString().Contains(requestid) ||
                            r.AdminReview.ToLower().Contains(keyword.Keyword.ToLower())
@@ -864,9 +871,33 @@ namespace RequestTracker.Services
             }
         }
 
+        //Assign roles
+        public void AssignRoles(string email, int role)
+        {
+            var roleclaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Role).Value;
+            if (roleclaim == "Admin")
+            {
+                var dbTable = _context.Employees.Where(d => d.Email == email && d.IsDeleted == false).FirstOrDefault();
+                if (dbTable != null)
+                {
+                    if (role != 1 || role != 2 || role != 3)
+                    {
+                        EmployeeModel response = new();
+                        dbTable.RoleId = role;
+                        _context.Employees.Update(dbTable);
+                        _context.SaveChanges();
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid Role");
+                    }
+                }
+            }
+        }
     }
-
 }
+
+
 
 //dashboard for admin
 
@@ -918,30 +949,7 @@ namespace RequestTracker.Services
 
 
 //}
-////Assign roles
-//public void AssignRoles(userModel userModel)
-//{
-//    User response = new User();
-//    var EmailList = _context.Users.Select(dbTable => dbTable.Email).ToList();
 
-//    if (EmailList.Contains(userModel.Email))
-//    {
-//        var dbTable = _context.Users.Where(d => d.Email == userModel.Email).FirstOrDefault();
-//        if (dbTable != null)
-//        {
-//            if (userModel.Role == "admin" || userModel.Role == "user")
-//            {
-//                dbTable.Role = userModel.Role;
-//                _context.Users.Update(dbTable);
-//                _context.SaveChanges();
-//            }
-//            else
-//            {
-//                throw new Exception("Invalid Role");
-//            }
-//        }
-//    }
-//}
 
 
 

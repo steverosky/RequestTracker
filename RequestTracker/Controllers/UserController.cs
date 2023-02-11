@@ -5,7 +5,6 @@ using RequestTracker.Models.BaseModels.RequestModels;
 using RequestTracker.Models.BaseModels.ResponseModels;
 using RequestTracker.Models.DBModels;
 using RequestTracker.Services;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace RequestTracker.Controllers
 {
@@ -342,6 +341,26 @@ namespace RequestTracker.Controllers
             };
         }
 
+
+        // ASSIGN ROLES api/<UserController>/5
+        [HttpPost]
+        [Route("AssignRole")]
+        public IActionResult AssignRoles(string email, int role)
+        {
+            try
+            {
+                ResponseType type = ResponseType.Success;
+
+                _db.AssignRoles(email, role);
+                return Ok(ResponseHandler.GetAppResponse(type, "Role Assigned Successfully"));
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+
     }
 }
 
@@ -356,160 +375,127 @@ namespace RequestTracker.Controllers
 //    {
 //        IEnumerable<GetRequestsModel> data = (IEnumerable<GetRequestsModel>)_db.GetRequestsById(stat);
 
-        //        if (!data.Any())
-        //        {
-        //            type = ResponseType.NotFound;
-        //        }
-        //        return Ok(ResponseHandler.GetAppResponse(type, data));
-        //    }
+//        if (!data.Any())
+//        {
+//            type = ResponseType.NotFound;
+//        }
+//        return Ok(ResponseHandler.GetAppResponse(type, data));
+//    }
 
-        //    catch (Exception ex)
-        //    {
+//    catch (Exception ex)
+//    {
 
-        //        return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-        //    }
+//        return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+//    }
 
-        //}
-
-
+//}
 
 
-        //// PUT api/<UserController>/5
-        //[HttpPut]
-        //[Route("UpdateUser")]
-        //public IActionResult Put(int id, [FromBody] userModel model)
-        //{
-        //    // Load the JWT token from the request header
-        //    var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
-        //    // Decode the JWT token and extract the payload
-        //    var handler = new JwtSecurityTokenHandler();
-        //    var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-        //    var userRole = jsonToken.Claims.First(claim => claim.Type == "Role").Value;
-
-        //    if (HasPermission(userRole, "UpdateUser"))
-        //    {
-
-        //        try
-        //        {
-        //            ResponseType type = ResponseType.Success;
-        //            _db.SaveUser(model);
-        //            return Ok(ResponseHandler.GetAppResponse(type, model));
-        //        }
-        //        catch (Exception ex)
-        //        {
-
-        //            return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        ResponseType type = ResponseType.Unauthorized;
-        //        return BadRequest(ResponseHandler.GetAppResponse(type, null));
-        //    }
-        //}
 
 
-        //// DELETE api/<UserController>/5
-        //[HttpDelete]
-        //[Route("DeleteUser")]
-        //public IActionResult Delete(int id)
-        //{
-        //    // Load the JWT token from the request header
-        //    var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+//// PUT api/<UserController>/5
+//[HttpPut]
+//[Route("UpdateUser")]
+//public IActionResult Put(int id, [FromBody] userModel model)
+//{
+//    // Load the JWT token from the request header
+//    var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-        //    // Decode the JWT token and extract the payload
-        //    var handler = new JwtSecurityTokenHandler();
-        //    var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-        //    var userRole = jsonToken.Claims.First(claim => claim.Type == "Role").Value;
+//    // Decode the JWT token and extract the payload
+//    var handler = new JwtSecurityTokenHandler();
+//    var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+//    var userRole = jsonToken.Claims.First(claim => claim.Type == "Role").Value;
 
-        //    if (HasPermission(userRole, "DeleteUser"))
-        //    {
-        //        try
-        //        {
-        //            ResponseType type = ResponseType.Success;
+//    if (HasPermission(userRole, "UpdateUser"))
+//    {
 
-        //            _db.DeleteUser(id);
-        //            return Ok(ResponseHandler.GetAppResponse(type, "Delete Success"));
-        //        }
-        //        catch (Exception ex)
-        //        {
+//        try
+//        {
+//            ResponseType type = ResponseType.Success;
+//            _db.SaveUser(model);
+//            return Ok(ResponseHandler.GetAppResponse(type, model));
+//        }
+//        catch (Exception ex)
+//        {
 
-        //            return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        ResponseType type = ResponseType.Unauthorized;
-        //        return BadRequest(ResponseHandler.GetAppResponse(type, null));
-        //    }
-        //}
-
-
-        //// ASSIGN ROLES api/<UserController>/5
-        //[HttpPost]
-        //[Route("AssignRoles")]
-        //public IActionResult AssignRoles([FromBody] userModel model)
-        //{
-        //    // Load the JWT token from the request header
-        //    var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
-        //    // Decode the JWT token and extract the payload
-        //    var handler = new JwtSecurityTokenHandler();
-        //    var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-        //    var userRole = jsonToken.Claims.First(claim => claim.Type == "Role").Value;
-
-        //    if (HasPermission(userRole, "AssignRoles"))
-        //    {
-        //        try
-        //        {
-        //            ResponseType type = ResponseType.Success;
-
-        //            _db.AssignRoles(model);
-        //            return Ok(ResponseHandler.GetAppResponse(type, "Role Assigned Successfully"));
-        //        }
-        //        catch (Exception ex)
-        //        {
-
-        //            return BadRequest(ResponseHandler.GetExceptionResponse(ex));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        ResponseType type = ResponseType.Unauthorized;
-        //        return BadRequest(ResponseHandler.GetAppResponse(type, null));
-        //    }
-        //}
-
-        //// Method to check if the specified role is valid and supported by the application
-        ////private bool IsValidRole(string role)
-        ////{
-        ////    // Check if the role is supported by the application
-        ////    // and return the result
-        ////    return (role == "user" || role == "admin" || role == "moderator");
-        ////}
+//            return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+//        }
+//    }
+//    else
+//    {
+//        ResponseType type = ResponseType.Unauthorized;
+//        return BadRequest(ResponseHandler.GetAppResponse(type, null));
+//    }
+//}
 
 
-        //// Dictionary to map roles to their corresponding permissions
-        //private Dictionary<string, List<string>> rolePermissions = new Dictionary<string, List<string>>()
-        //{
-        //    { "user", new List<string>() { "ChangePass", "UpdateUser", "Login" } },
-        //    { "admin", new List<string>() { "ChangePass", "UpdateUser", "Login", "AddUser", "DeleteUser", "GetUsers", "GetUserById", "AssignRoles" } }
-        //};
+//// DELETE api/<UserController>/5
+//[HttpDelete]
+//[Route("DeleteUser")]
+//public IActionResult Delete(int id)
+//{
+//    // Load the JWT token from the request header
+//    var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
-        //// Method to check if the user has the specified permission
-        //private bool HasPermission(string role, string permission)
-        //{
-        //    // Check if the role exists in the dictionary and if it has the specified permission
-        //    if (rolePermissions.ContainsKey(role) && rolePermissions[role].Contains(permission))
-        //    {
-        //        return true;
-        //    }
+//    // Decode the JWT token and extract the payload
+//    var handler = new JwtSecurityTokenHandler();
+//    var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+//    var userRole = jsonToken.Claims.First(claim => claim.Type == "Role").Value;
 
-        //    return false;
-        //}
+//    if (HasPermission(userRole, "DeleteUser"))
+//    {
+//        try
+//        {
+//            ResponseType type = ResponseType.Success;
 
- //[HttpPost]
+//            _db.DeleteUser(id);
+//            return Ok(ResponseHandler.GetAppResponse(type, "Delete Success"));
+//        }
+//        catch (Exception ex)
+//        {
+
+//            return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+//        }
+//    }
+//    else
+//    {
+//        ResponseType type = ResponseType.Unauthorized;
+//        return BadRequest(ResponseHandler.GetAppResponse(type, null));
+//    }
+//}
+
+
+
+
+//// Method to check if the specified role is valid and supported by the application
+////private bool IsValidRole(string role)
+////{
+////    // Check if the role is supported by the application
+////    // and return the result
+////    return (role == "user" || role == "admin" || role == "moderator");
+////}
+
+
+//// Dictionary to map roles to their corresponding permissions
+//private Dictionary<string, List<string>> rolePermissions = new Dictionary<string, List<string>>()
+//{
+//    { "user", new List<string>() { "ChangePass", "UpdateUser", "Login" } },
+//    { "admin", new List<string>() { "ChangePass", "UpdateUser", "Login", "AddUser", "DeleteUser", "GetUsers", "GetUserById", "AssignRoles" } }
+//};
+
+//// Method to check if the user has the specified permission
+//private bool HasPermission(string role, string permission)
+//{
+//    // Check if the role exists in the dictionary and if it has the specified permission
+//    if (rolePermissions.ContainsKey(role) && rolePermissions[role].Contains(permission))
+//    {
+//        return true;
+//    }
+
+//    return false;
+//}
+
+//[HttpPost]
 //[Route("AddAdmin")]
 //public async Task<IActionResult> AddAdmin([FromBody] userModel model)
 //{
