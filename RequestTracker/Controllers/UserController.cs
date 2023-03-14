@@ -104,24 +104,20 @@ namespace RequestTracker.Controllers
         }
 
 
-        // PUT api/<UserController>/6
-        [HttpPut]
-        [Route("ChangePass")]
-        public IActionResult ChangePass([FromBody] ChangePassModel user)
+        [HttpPatch("ChangePass")]
+        public ActionResult<ChangePassModel> ChangePassword(ChangePassModel model)
         {
             try
             {
                 ResponseType type = ResponseType.Success;
-                _db.ChangePass(user);
-                return Ok(ResponseHandler.GetAppResponse(type, user));
+                _db.ChangePass(model);
+                return Ok(ResponseHandler.GetAppResponse(type, model));
             }
             catch (Exception ex)
             {
-
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
-
 
         // login  api/<UserController>/6
         [AllowAnonymous]
